@@ -1,2 +1,3 @@
--- AlterTable
-ALTER TABLE `recipient` MODIFY `generatedPdfPath` LONGTEXT NULL;
+ALTER TABLE `Recipient`
+    MODIFY `generatedPdfPath` LONGTEXT NULL,
+    ADD COLUMN `responseStatus` VARCHAR(191) NOT NULL DEFAULT 'NOT_SENT';
