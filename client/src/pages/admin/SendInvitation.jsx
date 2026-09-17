@@ -265,7 +265,9 @@ const SendInvitation = () => {
         db.recipients.push(recipient);
         storageService.saveData(db);
       } else {
-        const res = await axios.post("/api/recipients", payload);
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await axios.post("/api/recipients", payload, { headers, withCredentials: true });
         recipient = res.data;
       }
 

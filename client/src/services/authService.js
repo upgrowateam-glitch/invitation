@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { storageService } from './storageService';
 
+// Automatically attach Bearer token to all axios requests
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token && (!config.headers || !config.headers.Authorization)) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  config.withCredentials = true;
+  return config;
+}, (error) => Promise.reject(error));
+
 const MODE = import.meta.env.VITE_APP_MODE === 'prototype' ? 'prototype' : 'production';
 
 export const authService = {

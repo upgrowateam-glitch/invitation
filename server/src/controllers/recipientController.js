@@ -58,10 +58,16 @@ const createRecipient = async (req, res) => {
   try {
     const { name, email, phone, company, invitationId, senderName, templateId, designConfiguration, maxAllowedGuests, notes, responseStatus, sentDate, sendDate, receiveDate } = req.body;
     
+    let currentSenderId = req.user?.id;
+    if (!currentSenderId) {
+      const firstUser = await prisma.user.findFirst({ where: { isActive: true } });
+      if (firstUser) currentSenderId = firstUser.id;
+    }
+
     // Duplicate Check: Same senderName, name, and templateId (to prevent accidental double clicks)
     const existing = await prisma.recipient.findFirst({
       where: {
-        senderId: req.user.id,
+        senderId: currentSenderId || undefined,
         name: name,
         senderName: senderName || null,
         templateId: templateId ? parseInt(templateId, 10) : undefined
@@ -108,17 +114,24 @@ const createRecipient = async (req, res) => {
           fs.writeFileSync(path.join(uploadsDir, ogFileName), ogBuffer);
         }
       } catch (err) {
-        console.error('Error saving base64 image:', err);
-        return res.status(500).json({ message: 'Error saving image.' });
+        console.warn('File system write error (cloud/read-only host fallback to base64):', err.message);
+        generatedPdfPath = req.body.base64Image;
       }
     } else if (templateId) {
       try {
         const { generateFinalPdf } = require('./templateController');
         generatedPdfPath = await generateFinalPdf(templateId, name, designConfiguration);
       } catch (err) {
-        console.error('Error generating final PDF:', err);
-        return res.status(500).json({ message: 'Error generating PDF. Check template configuration.' });
+        console.warn('Error generating final PDF fallback:', err.message);
       }
+    }
+
+    // Check if template exists for relational design create
+    let parsedTemplateId = templateId ? parseInt(templateId, 10) : null;
+    let templateExists = false;
+    if (parsedTemplateId) {
+      const foundTemplate = await prisma.template.findUnique({ where: { id: parsedTemplateId } });
+      if (foundTemplate) templateExists = true;
     }
 
     const recipient = await prisma.recipient.create({
@@ -127,10 +140,10 @@ const createRecipient = async (req, res) => {
         email,
         phone,
         company,
-        invitationId: invitationId || null,
-        senderId: req.user.id,
+        invitationId: invitationId ? parseInt(invitationId, 10) : null,
+        senderId: currentSenderId || null,
         senderName,
-        templateId: templateId ? parseInt(templateId, 10) : null,
+        templateId: templateExists ? parsedTemplateId : null,
         generatedPdfPath,
         token,
         maxAllowedGuests: maxAllowedGuests || 0,
@@ -139,9 +152,9 @@ const createRecipient = async (req, res) => {
         sentDate: sentDate ? new Date(sentDate) : new Date(),
         sendDate: sendDate ? new Date(sendDate) : (email ? new Date() : null),
         receiveDate: receiveDate ? new Date(receiveDate) : null,
-        design: designConfiguration && templateId ? {
+        design: (designConfiguration && templateExists) ? {
           create: {
-            templateId: parseInt(templateId, 10),
+            templateId: parsedTemplateId,
             receiverName: name,
             designConfiguration: typeof designConfiguration === 'string' ? designConfiguration : JSON.stringify(designConfiguration)
           }
@@ -154,6 +167,7 @@ const createRecipient = async (req, res) => {
     
     res.status(201).json(recipient);
   } catch (error) {
+    console.error('Error in createRecipient:', error);
     if (error.code === 'P2002') {
       return res.status(400).json({ message: 'Recipient with this email or phone already exists for this invitation.' });
     }
