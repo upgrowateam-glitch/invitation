@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { storageService } from './storageService';
 
-const MODE = import.meta.env.VITE_APP_MODE || 'prototype';
+const MODE = import.meta.env.VITE_APP_MODE === 'prototype' ? 'prototype' : 'production';
 
 export const authService = {
   async login(email, password) {
@@ -17,10 +17,11 @@ export const authService = {
       storageService.setAuthUser(sessionUser);
       return sessionUser;
     } else {
-      // Production API call
-      // TODO: Production Backend Integration
-      const res = await axios.post('/api/auth/login', { email, password });
-      return res.data;
+      const res = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
+      return res.data.user || res.data;
     }
   },
 
@@ -28,8 +29,12 @@ export const authService = {
     if (MODE === 'prototype') {
       storageService.setAuthUser(null);
     } else {
-      // TODO: Production Backend Integration
-      await axios.post('/api/auth/logout');
+      localStorage.removeItem('token');
+      try {
+        await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      } catch (err) {
+        // Ignore logout errors if session expired
+      }
     }
   },
 
@@ -39,8 +44,9 @@ export const authService = {
       if (!user) throw new Error('Not authenticated');
       return user;
     } else {
-      // TODO: Production Backend Integration
-      const res = await axios.get('/api/auth/me');
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axios.get('/api/auth/me', { headers, withCredentials: true });
       return res.data;
     }
   }

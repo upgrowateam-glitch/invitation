@@ -14,6 +14,39 @@ const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
 
 const MODE = import.meta.env.VITE_APP_MODE || "prototype";
 
+const RECEIVER_NAMES = [
+  "Abdul Anees CKP",
+  "Abdul Kareem Acheerakath",
+  "Aneesh Alakkadan",
+  "Anitha Sasikumar",
+  "Anshad TI",
+  "Azad Kuttukkan",
+  "Ebrahim Kutty P",
+  "Harris P",
+  "Irshad Ashraf",
+  "Ismail MK",
+  "Jamaludheen M",
+  "Javad TP",
+  "Jishnu K",
+  "Jithu Nambiar",
+  "Mohammed Afzal Parol",
+  "Muhammad Aslam",
+  "Muhammed Kunhi",
+  "Muhammed Shareef P",
+  "Nisha Parayil",
+  "Rashid Ibrahim",
+  "Reni Kotancheri",
+  "Ron Saj",
+  "Saji AK",
+  "Shahariyar Fayaz",
+  "Shahin Salam KV",
+  "Shahzad Ali",
+  "Shihabuddin B",
+  "Sibin K",
+  "Suhail Ahmed",
+  "Vijesh Patteri"
+];
+
 const SendInvitation = () => {
   const navigate = useNavigate();
   const previewRef = useRef(null);
@@ -241,24 +274,19 @@ const SendInvitation = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Receiver Name</label>
-                <input 
-                  type="text" 
+                <select 
                   name="receiverName" 
-                  placeholder="e.g. Jane Smith"
                   value={formData.receiverName || ""} 
                   onChange={handleChange} 
-                  className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.receiverName ? "border-red-400" : "border-slate-200"}`} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Time of Expiry</label>
-                <input 
-                  type="datetime-local" 
-                  name="receiveDate" 
-                  value={formData.receiveDate || ""} 
-                  onChange={handleChange} 
-                  className="w-full bg-white text-slate-900 border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
-                />
+                  className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.receiverName ? "border-red-400" : "border-slate-200"}`}
+                >
+                  <option value="">Select Receiver Name...</option>
+                  {RECEIVER_NAMES.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             

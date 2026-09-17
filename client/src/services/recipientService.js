@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storageService } from './storageService';
 import { v4 as uuidv4 } from 'uuid';
 
-const MODE = import.meta.env.VITE_APP_MODE || 'prototype';
+const MODE = import.meta.env.VITE_APP_MODE === 'prototype' ? 'prototype' : 'production';
 
 export const recipientService = {
   async getRecipients() {

@@ -21,7 +21,16 @@ const Login = () => {
       await login(email, password);
       navigate('/invitation/admin/send');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      console.error('Login error:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        'Login failed. Please check your credentials.'
+      );
     } finally {
       setLoading(false);
     }

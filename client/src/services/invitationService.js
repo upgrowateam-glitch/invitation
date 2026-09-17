@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { storageService } from './storageService';
 
-const MODE = import.meta.env.VITE_APP_MODE || 'prototype';
+const MODE = import.meta.env.VITE_APP_MODE === 'prototype' ? 'prototype' : 'production';
 
 export const invitationService = {
   async getDashboardStats() {
