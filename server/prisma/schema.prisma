@@ -134,7 +134,7 @@ model Recipient {
   
   senderName          String?
   templateId          Int?
-  generatedPdfPath    String?
+  generatedPdfPath    String?    @db.LongText
   
   token               String     @unique // Secure random URL token
   

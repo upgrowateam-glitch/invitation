@@ -87,34 +87,44 @@ const createRecipient = async (req, res) => {
     // Auto-generate the personalized PDF immediately and securely save it
     let generatedPdfPath = null;
     if (req.body.base64Image) {
-      try {
-        const match = req.body.base64Image.match(/^data:image\/(\w+);base64,/);
-        const ext = match && match[1] === 'jpeg' ? 'jpg' : 'png';
-        const base64Data = req.body.base64Image.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        
-        const fileId = crypto.randomBytes(16).toString('hex');
-        const fileName = `invite-${fileId}.${ext}`;
-        const fs = require('fs');
-        const path = require('path');
-        const uploadsDir = path.join(__dirname, '../../../uploads/generated');
-        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-        
-        // Save tight image
-        fs.writeFileSync(path.join(uploadsDir, fileName), buffer);
-        generatedPdfPath = `/uploads/generated/${fileName}`;
-        
-        // Save OG image if provided
-        if (req.body.ogBase64Image) {
-          const ogMatch = req.body.ogBase64Image.match(/^data:image\/(\w+);base64,/);
-          const ogExt = ogMatch && ogMatch[1] === 'jpeg' ? 'jpg' : 'png';
-          const ogBase64Data = req.body.ogBase64Image.replace(/^data:image\/\w+;base64,/, '');
-          const ogBuffer = Buffer.from(ogBase64Data, 'base64');
-          const ogFileName = `og-invite-${fileId}.${ogExt}`;
-          fs.writeFileSync(path.join(uploadsDir, ogFileName), ogBuffer);
+      const match = req.body.base64Image.match(/^data:image\/(\w+);base64,/);
+      const ext = match && match[1] === 'jpeg' ? 'jpg' : 'png';
+      const base64Data = req.body.base64Image.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      const fileId = crypto.randomBytes(16).toString('hex');
+      const fileName = `invite-${fileId}.${ext}`;
+      const fs = require('fs');
+      const path = require('path');
+      const os = require('os');
+      
+      const primaryDir = path.join(__dirname, '../../../uploads/generated');
+      const tmpDir = path.join(os.tmpdir(), 'uploads/generated');
+      
+      let savedToFile = false;
+      for (const targetDir of [primaryDir, tmpDir]) {
+        try {
+          if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+          fs.writeFileSync(path.join(targetDir, fileName), buffer);
+
+          if (req.body.ogBase64Image) {
+            const ogMatch = req.body.ogBase64Image.match(/^data:image\/(\w+);base64,/);
+            const ogExt = ogMatch && ogMatch[1] === 'jpeg' ? 'jpg' : 'png';
+            const ogBase64Data = req.body.ogBase64Image.replace(/^data:image\/\w+;base64,/, '');
+            const ogBuffer = Buffer.from(ogBase64Data, 'base64');
+            const ogFileName = `og-invite-${fileId}.${ogExt}`;
+            fs.writeFileSync(path.join(targetDir, ogFileName), ogBuffer);
+          }
+          
+          generatedPdfPath = `/uploads/generated/${fileName}`;
+          savedToFile = true;
+          break;
+        } catch (err) {
+          console.warn(`Could not save image to ${targetDir}:`, err.message);
         }
-      } catch (err) {
-        console.warn('File system write error (cloud/read-only host fallback to base64):', err.message);
+      }
+
+      if (!savedToFile) {
         generatedPdfPath = req.body.base64Image;
       }
     } else if (templateId) {
