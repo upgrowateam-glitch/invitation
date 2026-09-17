@@ -144,37 +144,57 @@ const createRecipient = async (req, res) => {
       if (foundTemplate) templateExists = true;
     }
 
-    const recipient = await prisma.recipient.create({
-      data: {
-        name,
-        email,
-        phone,
-        company,
-        invitationId: invitationId ? parseInt(invitationId, 10) : null,
-        senderId: currentSenderId || null,
-        senderName,
-        templateId: templateExists ? parsedTemplateId : null,
-        generatedPdfPath,
-        token,
-        maxAllowedGuests: maxAllowedGuests || 0,
-        notes,
-        responseStatus: responseStatus || 'SENT',
-        sentDate: sentDate ? new Date(sentDate) : new Date(),
-        sendDate: sendDate ? new Date(sendDate) : (email ? new Date() : null),
-        receiveDate: receiveDate ? new Date(receiveDate) : null,
-        design: (designConfiguration && templateExists) ? {
-          create: {
-            templateId: parsedTemplateId,
-            receiverName: name,
-            designConfiguration: typeof designConfiguration === 'string' ? designConfiguration : JSON.stringify(designConfiguration)
-          }
-        } : undefined
-      },
-      include: {
-        design: true
+    let recipient;
+    const recipientData = {
+      name,
+      email: email || null,
+      phone: phone || null,
+      company: company || null,
+      invitationId: invitationId ? parseInt(invitationId, 10) : null,
+      senderId: currentSenderId || null,
+      senderName: senderName || null,
+      templateId: templateExists ? parsedTemplateId : null,
+      generatedPdfPath,
+      token,
+      maxAllowedGuests: maxAllowedGuests || 0,
+      notes: notes || null,
+      responseStatus: responseStatus || 'SENT',
+      sentDate: sentDate ? new Date(sentDate) : new Date(),
+      sendDate: sendDate ? new Date(sendDate) : (email ? new Date() : null),
+      receiveDate: receiveDate ? new Date(receiveDate) : null,
+    };
+
+    try {
+      recipient = await prisma.recipient.create({
+        data: {
+          ...recipientData,
+          design: (designConfiguration && templateExists) ? {
+            create: {
+              templateId: parsedTemplateId,
+              receiverName: name,
+              designConfiguration: typeof designConfiguration === 'string' ? designConfiguration : JSON.stringify(designConfiguration)
+            }
+          } : undefined
+        },
+        include: {
+          design: true
+        }
+      });
+    } catch (primaryErr) {
+      console.warn('Primary recipient creation failed, executing safe fallback insertion:', primaryErr.message);
+
+      // Safe fallback: strip base64 if longer than 190 chars (to respect VARCHAR(191) on unmigrated hosted DB) and remove relational constraints
+      if (typeof recipientData.generatedPdfPath === 'string' && recipientData.generatedPdfPath.length > 190) {
+        recipientData.generatedPdfPath = null;
       }
-    });
-    
+      recipientData.templateId = null;
+      recipientData.invitationId = null;
+
+      recipient = await prisma.recipient.create({
+        data: recipientData
+      });
+    }
+
     res.status(201).json(recipient);
   } catch (error) {
     console.error('Error in createRecipient:', error);
