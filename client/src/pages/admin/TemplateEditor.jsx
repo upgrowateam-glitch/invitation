@@ -15,14 +15,14 @@ const TemplateEditor = () => {
   // Field config state (Design Configuration)
   const [designConfig, setDesignConfig] = useState({
     pageNumber: 1,
-    xPosition: 0.5,
-    yPosition: 0.5,
+    xPosition: 0.1,
+    yPosition: 0.565,
     textBoxWidth: 0.8,
-    fontFamily: 'Helvetica',
-    fontSize: 48,
+    fontFamily: 'Clicker Script',
+    fontSize: 20,
     textAlign: 'center',
     fontColour: '#000000',
-    fontWeight: 'bold'
+    fontWeight: 'normal'
   });
   
   const [receiverName, setReceiverName] = useState('');
@@ -80,11 +80,11 @@ const TemplateEditor = () => {
           xPosition: f.xPosition,
           yPosition: f.yPosition,
           textBoxWidth: f.textBoxWidth || 0.8,
-          fontFamily: f.fontFamily,
-          fontSize: f.fontSize,
-          textAlign: f.textAlignment,
-          fontColour: f.fontColour,
-          fontWeight: f.fontWeight
+          fontFamily: f.fontFamily || 'Clicker Script',
+          fontSize: f.fontSize || 20,
+          textAlign: f.textAlignment || f.textAlign || 'center',
+          fontColour: f.fontColour || '#000000',
+          fontWeight: f.fontWeight || 'normal'
         });
       }
     } catch (err) {
@@ -105,18 +105,14 @@ const TemplateEditor = () => {
     }
   };
 
-  const handleUseDesign = () => {
-    // Save to session storage and go to SendInvitation
-    const draft = sessionStorage.getItem('invitationDraft');
-    let parsed = draft ? JSON.parse(draft) : {};
-    
-    parsed.templateId = template.id;
-    parsed.templateName = template.name;
-    parsed.receiverName = receiverName;
-    parsed.designConfiguration = designConfig;
-    
-    sessionStorage.setItem('invitationDraft', JSON.stringify(parsed));
-    navigate('/invitation/admin/send');
+  const handleUseDesign = async () => {
+    try {
+      await axios.post(`/api/templates/${id}/fields`, { fields: [designConfig] });
+      navigate('/invitation/admin/send');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving layout configuration');
+    }
   };
 
   const handlePointerDown = (e, action) => {
@@ -315,6 +311,21 @@ const TemplateEditor = () => {
                     placeholder="Enter name"
                   />
                   {warning && <p className="text-[10px] text-yellow-600 mt-1 flex items-start"><AlertCircle size={12} className="mr-1 mt-0.5 shrink-0"/> {warning}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Font Family</label>
+                  <select 
+                    value={designConfig.fontFamily}
+                    onChange={e => setDesignConfig({...designConfig, fontFamily: e.target.value})}
+                    className="w-full border border-gray-300 rounded p-2 text-sm font-medium"
+                  >
+                    <option value="Clicker Script">Clicker Script (Cursive Default)</option>
+                    <option value="Inter">Inter (Sans-Serif)</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
