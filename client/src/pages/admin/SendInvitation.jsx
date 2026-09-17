@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import html2canvas from "html2canvas";
 import { storageService } from "../../services/storageService";
 import { pdfService } from "../../services/pdfService";
-import { Minus, Plus, X, CheckCircle, Copy, Search, ChevronDown, Check, Settings, AlertTriangle } from "lucide-react";
+import { Minus, Plus, X, CheckCircle, Copy, Search, ChevronDown, Check } from "lucide-react";
 
 const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -135,11 +135,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, error }) => {
 
 const SendInvitation = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const previewRef = useRef(null);
-  
-  const [availableTemplates, setAvailableTemplates] = useState([]);
-  const [templatesLoading, setTemplatesLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     senderName: "",
@@ -156,61 +152,34 @@ const SendInvitation = () => {
   const [fontSize, setFontSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    setTemplatesLoading(true);
-    try {
-      const templates = await pdfService.getTemplates();
-      setAvailableTemplates(templates || []);
-      
-      if (templates && templates.length > 0) {
-        // Check if query string has templateId
-        const params = new URLSearchParams(location.search);
-        const urlTempId = params.get("templateId");
-        let selected = templates[0];
-        if (urlTempId) {
-          const match = templates.find(t => t.id === parseInt(urlTempId, 10));
-          if (match) selected = match;
+    // Auto-fetch the first template
+    const fetchDefaultTemplate = async () => {
+      try {
+        const templates = await pdfService.getTemplates();
+        if (templates && templates.length > 0) {
+          const defaultTemplate = templates[0];
+          setFormData(prev => ({
+            ...prev,
+            templateId: defaultTemplate.id,
+            templateName: defaultTemplate.name,
+            templateUrl: defaultTemplate.originalFilePath,
+            designConfiguration: { ...(defaultTemplate.defaultConfig?.[0] || {}), yPosition: 0.565 } || {
+              xPosition: 0.1,
+              yPosition: 0.565,
+              textAlignment: "center"
+            }
+          }));
         }
-        applyTemplateSelection(selected);
+      } catch (err) {
+        console.error("Error fetching templates:", err);
       }
-    } catch (err) {
-      console.error("Error fetching templates:", err);
-      setToast({ type: "error", message: "Failed to load templates from production server." });
-    } finally {
-      setTemplatesLoading(false);
-    }
-  };
-
-  const applyTemplateSelection = (template) => {
-    const rawCfg = (template.defaultConfig && template.defaultConfig.length > 0) ? template.defaultConfig[0] : {};
-    const cfg = {
-      xPosition: rawCfg.xPosition !== undefined ? rawCfg.xPosition : 0.1,
-      yPosition: rawCfg.yPosition !== undefined ? rawCfg.yPosition : 0.565,
-      textBoxWidth: rawCfg.textBoxWidth !== undefined ? rawCfg.textBoxWidth : 0.8,
-      fontFamily: "Clicker Script",
-      fontSize: 20,
-      fontColour: "#000000",
-      fontWeight: rawCfg.fontWeight || "normal",
-      textAlignment: rawCfg.textAlignment || rawCfg.textAlign || "center"
     };
-
-    setFormData(prev => ({
-      ...prev,
-      templateId: template.id,
-      templateName: template.name,
-      templateUrl: template.originalFilePath,
-      fileType: template.fileType || (template.originalFilePath?.toLowerCase().endsWith('.pdf') ? 'PDF' : 'IMAGE'),
-      designConfiguration: cfg
-    }));
-
-    setFontSize(20);
-  };
+    fetchDefaultTemplate();
+  }, []);
 
   const handleChange = (e) => {
     const newData = { ...formData, [e.target.name]: e.target.value };
@@ -225,7 +194,7 @@ const SendInvitation = () => {
     const isForce = typeof e === "boolean" ? e : (forceCreate === true);
 
     if (!formData.senderName || !formData.receiverName || !formData.templateId) {
-      alert("Please fill all required fields, including Sender Name, Receiver Name, and Template");
+      alert("Please fill all required fields");
       return;
     }
 
@@ -312,7 +281,7 @@ const SendInvitation = () => {
           return handleSend(e, true);
         }
       } else {
-        const errorDetails = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to send invitation to production API server";
+        const errorDetails = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to communicate with Express API";
         alert(`API Error (${err.response?.status || 'Network'}): ${errorDetails}`);
         console.error("Send Invitation API Failure:", err);
       }
@@ -334,20 +303,19 @@ const SendInvitation = () => {
     }
   };
 
-  const config = formData.designConfiguration || {};
   const overlayStyle = {
     position: "absolute",
-    left: `${(config.xPosition !== undefined ? config.xPosition : 0.1) * 100}%`,
-    top: `${(config.yPosition !== undefined ? config.yPosition : 0.565) * 100}%`,
-    width: `${(config.textBoxWidth !== undefined ? config.textBoxWidth : 0.8) * 100}%`,
+    left: 0,
+    right: 0,
+    top: "56.5%",
     transform: "translateY(-50%)",
     display: "flex",
-    justifyContent: (config.textAlignment || config.textAlign) === 'center' ? 'center' : (config.textAlignment || config.textAlign) === 'right' ? 'flex-end' : 'flex-start',
+    justifyContent: "center",
     alignItems: "center",
     color: "#000000",
-    fontFamily: '"Clicker Script", cursive, sans-serif',
-    fontSize: `${fontSize || 20}px`,
-    fontWeight: config.fontWeight === 'bold' ? 'bold' : 'normal',
+    fontFamily: "\"Clicker Script\", cursive",
+    fontSize: `${fontSize}px`,
+    width: "100%",
     pointerEvents: "none"
   };
 
@@ -380,7 +348,6 @@ const SendInvitation = () => {
                   error={errors.senderName}
                 />
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Receiver Name</label>
                 <input 
@@ -391,19 +358,6 @@ const SendInvitation = () => {
                   className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.receiverName ? "border-red-400" : "border-slate-200"}`} 
                 />
               </div>
-
-              {/* Automatic Template Selection Indicator */}
-              {availableTemplates.length === 0 && !templatesLoading && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2 text-xs text-amber-800">
-                  <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span>No invitation templates found in database. </span>
-                    <button onClick={() => navigate('/invitation/admin/templates')} className="font-bold underline text-amber-900 hover:text-black">
-                      Upload Template in Gallery
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
             
             <div className="px-6 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
@@ -427,10 +381,10 @@ const SendInvitation = () => {
 
         {/* Right Preview Column */}
         <div className="lg:col-span-7">
-          {formData.templateUrl ? (
+          {formData.templateUrl && (
             <div className="bg-white rounded-xl shadow-sm border border-card-border p-6 flex flex-col items-center">
               <div className="w-full flex items-center justify-between mb-6">
-                <h3 className="text-base font-semibold text-slate-800">Live Preview ({formData.templateName || "Template"})</h3>
+                <h3 className="text-base font-semibold text-slate-800">Live Preview</h3>
                 <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                   <div className="flex items-center space-x-2 pr-3">
                     <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Font Size</span>
@@ -459,41 +413,31 @@ const SendInvitation = () => {
                     outlineColor: 'transparent'
                   }}
                 >
-                  {formData.fileType === 'PDF' || formData.templateUrl?.toLowerCase().endsWith('.pdf') ? (
-                    <iframe 
-                      src={
-                        (formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
-                          ? formData.templateUrl 
-                          : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl) + "#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
-                      } 
-                      className="w-full aspect-[1/1.4] border-0 pointer-events-none"
-                      title={formData.templateName || "Template PDF"}
-                    />
-                  ) : (
-                    <img 
-                      src={
-                        formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
-                          ? formData.templateUrl 
-                          : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl
-                      } 
-                      alt="Template" 
-                      style={{ 
-                        width: "100%", 
-                        display: "block",
-                        color: '#000000',
-                        borderColor: 'transparent',
-                        boxShadow: 'none',
-                        textShadow: 'none',
-                        outlineColor: 'transparent'
-                      }}
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        console.error("Image failed to load:", e.target.src);
-                      }}
-                    />
-                  )}
+                  <img 
+                    src={
+                      formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
+                        ? formData.templateUrl 
+                        : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl
+                    } 
+                    alt="Template" 
+                    style={{ 
+                      width: "100%", 
+                      display: "block",
+                      color: '#000000',
+                      borderColor: 'transparent',
+                      boxShadow: 'none',
+                      textShadow: 'none',
+                      outlineColor: 'transparent'
+                    }}
+                    crossOrigin="anonymous"
+                    onError={(e) => {
+                      console.error("Image failed to load:", e.target.src);
+                      e.target.style.display = 'none';
+                    }}
+                  />
                   <div style={{
                     ...overlayStyle,
+                    color: '#000000',
                     borderColor: 'transparent',
                     boxShadow: 'none',
                     textShadow: 'none',
@@ -503,22 +447,6 @@ const SendInvitation = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-card-border p-12 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center text-slate-400 mb-4">
-                <AlertTriangle size={32} />
-              </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">No Template Selected</h3>
-              <p className="text-sm text-slate-500 max-w-sm mb-6">
-                Please upload a template in the Template Gallery or select a template from the dropdown menu to see the live preview.
-              </p>
-              <button
-                onClick={() => navigate("/invitation/admin/templates")}
-                className="px-5 py-2.5 bg-primary text-white rounded-lg font-medium shadow hover:bg-primary-dark transition-all"
-              >
-                Go to Template Gallery
-              </button>
             </div>
           )}
         </div>

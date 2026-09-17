@@ -7,41 +7,14 @@ const crypto = require('crypto');
 
 const getTemplates = async (req, res) => {
   try {
-    let templates = await prisma.template.findMany({
+    const templates = await prisma.template.findMany({
       where: { isArchived: false },
       include: { defaultConfig: true },
       orderBy: { createdAt: 'desc' }
     });
-
-    // Ensure any template missing a defaultConfig gets one auto-created in MySQL
-    for (const t of templates) {
-      if (!t.defaultConfig || t.defaultConfig.length === 0) {
-        try {
-          const newCfg = await prisma.templateDefaultConfiguration.create({
-            data: {
-              templateId: t.id,
-              pageNumber: 1,
-              xPosition: 0.1,
-              yPosition: 0.565,
-              textBoxWidth: 0.8,
-              fontFamily: 'Clicker Script',
-              fontSize: 20,
-              textAlignment: 'center',
-              fontColour: '#000000',
-              fontWeight: 'normal'
-            }
-          });
-          t.defaultConfig = [newCfg];
-        } catch (cfgErr) {
-          console.error(`Error auto-generating defaultConfig for template ${t.id}:`, cfgErr);
-        }
-      }
-    }
-
     res.json(templates);
   } catch (error) {
-    console.error('getTemplates Error:', error);
-    res.status(500).json({ message: 'Error fetching templates', error: error.message });
+    res.status(500).json({ message: 'Error fetching templates' });
   }
 };
 
@@ -65,27 +38,14 @@ const createTemplate = async (req, res) => {
         fileType,
         originalFilePath: `/uploads/templates/${req.file.filename}`,
         thumbnailPath: `/uploads/templates/${req.file.filename}`,
-        createdBy: req.user ? req.user.id : null,
-        defaultConfig: {
-          create: {
-            pageNumber: 1,
-            xPosition: 0.1,
-            yPosition: 0.565,
-            textBoxWidth: 0.8,
-            fontFamily: 'Clicker Script',
-            fontSize: 20,
-            textAlignment: 'center',
-            fontColour: '#000000',
-            fontWeight: 'normal'
-          }
-        }
+        createdBy: req.user.id
       },
       include: { defaultConfig: true }
     });
     res.status(201).json(template);
   } catch (error) {
-    console.error('createTemplate Error:', error);
-    res.status(500).json({ message: 'Error creating template', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Error creating template' });
   }
 };
 
@@ -131,9 +91,9 @@ const saveTemplateFields = async (req, res) => {
           yPosition: configToSave.yPosition,
           textBoxWidth: configToSave.textBoxWidth || null,
           textBoxHeight: configToSave.textBoxHeight || null,
-          fontFamily: configToSave.fontFamily || 'Clicker Script',
-          fontSize: configToSave.fontSize || 20,
-          textAlignment: configToSave.textAlignment || configToSave.textAlign || 'center',
+          fontFamily: configToSave.fontFamily || 'Helvetica',
+          fontSize: configToSave.fontSize || 24,
+          textAlignment: configToSave.textAlignment || configToSave.textAlign || 'left',
           fontColour: configToSave.fontColour || '#000000',
           fontWeight: configToSave.fontWeight || 'normal'
         },

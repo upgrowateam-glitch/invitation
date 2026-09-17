@@ -238,32 +238,10 @@ const TemplateGallery = () => {
                   </div>
                 </div>
 
-                {/* Footer Info & Actions */}
-                <div className="p-3 border-t flex flex-col gap-2">
-                  <div>
-                    <h3 className="font-semibold text-gray-800 text-sm truncate" title={template.name}>{template.name}</h3>
-                    <p className="text-xs text-gray-500 truncate">{template.category || 'General'}</p>
-                  </div>
-                  <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/invitation/admin/templates/${template.id}/edit`);
-                      }}
-                      className="flex-1 py-1 px-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded text-center transition-colors"
-                    >
-                      Configure Layout
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/invitation/admin/send?templateId=${template.id}`);
-                      }}
-                      className="flex-1 py-1 px-2 text-xs font-medium text-white bg-primary hover:bg-primary-dark rounded text-center transition-colors"
-                    >
-                      Use Template
-                    </button>
-                  </div>
+                {/* Footer Info */}
+                <div className="p-3 border-t">
+                  <h3 className="font-semibold text-gray-800 text-sm truncate" title={template.name}>{template.name}</h3>
+                  <p className="text-xs text-gray-500 truncate">{template.category || 'General'}</p>
                 </div>
               </div>
             ))}
