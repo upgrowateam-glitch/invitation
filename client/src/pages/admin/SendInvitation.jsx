@@ -149,7 +149,7 @@ const SendInvitation = () => {
     designConfiguration: null
   });
   
-  const [fontSize, setFontSize] = useState(42);
+  const [fontSize, setFontSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   
@@ -167,9 +167,9 @@ const SendInvitation = () => {
             templateId: defaultTemplate.id,
             templateName: defaultTemplate.name,
             templateUrl: defaultTemplate.originalFilePath,
-            designConfiguration: { ...(defaultTemplate.defaultConfig?.[0] || {}), yPosition: 0.585 } || {
+            designConfiguration: { ...(defaultTemplate.defaultConfig?.[0] || {}), yPosition: 0.565 } || {
               xPosition: 0.1,
-              yPosition: 0.585,
+              yPosition: 0.565,
               textAlignment: "center"
             }
           }));
@@ -321,7 +321,7 @@ const SendInvitation = () => {
     position: "absolute",
     left: 0,
     right: 0,
-    top: "58.5%",
+    top: "56.5%",
     transform: "translateY(-50%)",
     display: "flex",
     justifyContent: "center",
