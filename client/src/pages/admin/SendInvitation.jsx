@@ -4,7 +4,7 @@ import axios from "axios";
 import html2canvas from "html2canvas";
 import { storageService } from "../../services/storageService";
 import { pdfService } from "../../services/pdfService";
-import { Minus, Plus, X, CheckCircle, Copy } from "lucide-react";
+import { Minus, Plus, X, CheckCircle, Copy, Search, ChevronDown, Check } from "lucide-react";
 
 const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
@@ -14,7 +14,7 @@ const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
 
 const MODE = import.meta.env.VITE_APP_MODE || "prototype";
 
-const RECEIVER_NAMES = [
+const SENDER_NAMES = [
   "Abdul Anees CKP",
   "Abdul Kareem Acheerakath",
   "Aneesh Alakkadan",
@@ -46,6 +46,92 @@ const RECEIVER_NAMES = [
   "Suhail Ahmed",
   "Vijesh Patteri"
 ];
+
+const SearchableSelect = ({ options, value, onChange, placeholder, error }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(option =>
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (option) => {
+    onChange(option);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(prev => !prev)}
+        className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 flex items-center justify-between cursor-pointer transition-all ${
+          error ? "border-red-400" : "border-slate-200"
+        } ${isOpen ? "ring-2 ring-primary/20 border-primary" : "hover:border-slate-300"}`}
+      >
+        <span className={value ? "text-slate-900 font-medium truncate" : "text-slate-400"}>
+          {value || placeholder}
+        </span>
+        <ChevronDown size={18} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in duration-150">
+          <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+            <Search size={16} className="text-slate-400 shrink-0" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search sender..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+            />
+            {searchTerm && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setSearchTerm(""); }} 
+                className="text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <div className="max-h-60 overflow-y-auto divide-y divide-slate-50">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((name) => (
+                <div
+                  key={name}
+                  onClick={() => handleSelect(name)}
+                  className={`px-4 py-2.5 text-sm cursor-pointer flex items-center justify-between transition-colors ${
+                    value === name ? "bg-primary/10 text-primary font-semibold" : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>{name}</span>
+                  {value === name && <Check size={16} className="text-primary" />}
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-sm text-slate-400">
+                No matching senders found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SendInvitation = () => {
   const navigate = useNavigate();
@@ -81,9 +167,9 @@ const SendInvitation = () => {
             templateId: defaultTemplate.id,
             templateName: defaultTemplate.name,
             templateUrl: defaultTemplate.originalFilePath,
-            designConfiguration: { ...(defaultTemplate.defaultConfig?.[0] || {}), yPosition: 0.42 } || {
+            designConfiguration: { ...(defaultTemplate.defaultConfig?.[0] || {}), yPosition: 0.585 } || {
               xPosition: 0.1,
-              yPosition: 0.57,
+              yPosition: 0.585,
               textAlignment: "center"
             }
           }));
@@ -235,7 +321,7 @@ const SendInvitation = () => {
     position: "absolute",
     left: 0,
     right: 0,
-    top: "54.8%",
+    top: "58.5%",
     transform: "translateY(-50%)",
     display: "flex",
     justifyContent: "center",
@@ -265,30 +351,26 @@ const SendInvitation = () => {
             <div className="p-6 space-y-5">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Sender Name</label>
-                <input 
-                  type="text" 
-                  name="senderName" 
-                  placeholder="e.g. John Doe"
-                  value={formData.senderName || ""} 
-                  onChange={handleChange} 
-                  className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.senderName ? "border-red-400" : "border-slate-200"}`} 
+                <SearchableSelect 
+                  options={SENDER_NAMES}
+                  value={formData.senderName}
+                  onChange={(val) => {
+                    setFormData(prev => ({ ...prev, senderName: val }));
+                    if (errors.senderName) setErrors(prev => ({ ...prev, senderName: null }));
+                  }}
+                  placeholder="Select or search Sender Name..."
+                  error={errors.senderName}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Receiver Name</label>
-                <select 
+                <input 
+                  type="text" 
                   name="receiverName" 
                   value={formData.receiverName || ""} 
                   onChange={handleChange} 
-                  className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.receiverName ? "border-red-400" : "border-slate-200"}`}
-                >
-                  <option value="">Select Receiver Name...</option>
-                  {RECEIVER_NAMES.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                  className={`w-full bg-white text-slate-900 border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${errors.receiverName ? "border-red-400" : "border-slate-200"}`} 
+                />
               </div>
             </div>
             
@@ -375,7 +457,7 @@ const SendInvitation = () => {
                     textShadow: 'none',
                     outlineColor: 'transparent'
                   }}>
-                    {formData.receiverName || "Receiver Name"}
+                    {formData.receiverName || ""}
                   </div>
                 </div>
               </div>
