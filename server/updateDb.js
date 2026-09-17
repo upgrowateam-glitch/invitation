@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function run() { await prisma.template.update({ where: { id: 1 }, data: { defaultConfig: [{ type: 'TEXT', key: 'receiverName', yPosition: 0.36, fontSize: 42, fontFamily: 'Clicker Script', fontColor: '#000000' }] } }); console.log('Done'); } run().finally(() => prisma.\$disconnect());

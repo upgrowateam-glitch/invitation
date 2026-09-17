@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); prisma.template.update({where: {id: 1}, data: {originalFilePath: '/uploads/templates/bni-template.png', fileType: 'PNG'}}).then(() => console.log('DB updated')).finally(() => prisma.$disconnect());

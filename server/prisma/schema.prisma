@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("SENDER") // SUPER_ADMIN, ADMIN, SENDER
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdInvitations Invitation[] @relation("CreatedInvitations")
+  recipients         Recipient[]  @relation("SenderRecipients")
+  createdTemplates   Template[]   @relation("CreatedTemplates")
+  activities         InvitationActivity[]
+}
+
+model Invitation {
+  id                  Int       @id @default(autoincrement())
+  title               String
+  description         String?   @db.Text
+  eventDate           DateTime
+  startTime           String
+  endTime             String?
+  venueName           String
+  address             String    @db.Text
+  googleMapsLink      String?   @db.Text
+  hostName            String
+  contactName         String?
+  contactPhone        String?
+  contactEmail        String?
+  coverImage          String?
+  customMessage       String?   @db.Text
+  dressCode           String?
+  rsvpDeadline        DateTime?
+  additionalInstructions String? @db.Text
+  allowGuests         Boolean   @default(false)
+  maxGuestsPerRecipient Int     @default(0)
+  allowResponseEdit   Boolean   @default(false)
+  status              String    @default("DRAFT") // DRAFT, ACTIVE, COMPLETED, CANCELLED, ARCHIVED
+
+  creatorId           Int
+  creator             User      @relation("CreatedInvitations", fields: [creatorId], references: [id])
+  
+  templateId          Int?
+  template            Template? @relation(fields: [templateId], references: [id])
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  recipients          Recipient[]
+  pdfs                GeneratedInvitationPdf[]
+}
+
+model Template {
+  id               Int      @id @default(autoincrement())
+  name             String
+  description      String?  @db.Text
+  category         String?  @default("General Invitation")
+  sourceType       String   @default("UPLOAD") // SYSTEM, UPLOAD
+  fileType         String   @default("PDF") // PDF, PNG, JPG
+  originalFilePath String
+  thumbnailPath    String?
+  isSystemTemplate Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  isArchived       Boolean  @default(false)
+  
+  createdBy        Int?
+  user             User?    @relation("CreatedTemplates", fields: [createdBy], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  defaultConfig    TemplateDefaultConfiguration[]
+  invitations      Invitation[]
+  designs          InvitationDesign[]
+}
+
+model TemplateDefaultConfiguration {
+  id            Int      @id @default(autoincrement())
+  templateId    Int
+  template      Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  pageNumber    Int      @default(1)
+  xPosition     Float
+  yPosition     Float
+  textBoxWidth  Float?
+  textBoxHeight Float?
+  fontFamily    String   @default("Helvetica")
+  fontSize      Float    @default(24)
+  fontWeight    String   @default("normal")
+  fontColour    String   @default("#000000")
+  textAlignment String   @default("center") // left, center, right
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model InvitationDesign {
+  id                  Int       @id @default(autoincrement())
+  templateId          Int
+  template            Template  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  recipientId         Int?      @unique
+  recipient           Recipient? @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  receiverName        String
+  designConfiguration String    @db.Text // JSON containing x, y, font, color, etc.
+  generatedFilePath   String?
+  previewPath         String?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Recipient {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  email               String?
+  phone               String?
+  company             String?
+  
+  invitationId        Int?
+  invitation          Invitation? @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  
+  senderId            Int?
+  sender              User?       @relation("SenderRecipients", fields: [senderId], references: [id])
+  
+  senderName          String?
+  templateId          Int?
+  generatedPdfPath    String?
+  
+  token               String     @unique // Secure random URL token
+  
+  maxAllowedGuests    Int        @default(0)
+  responseStatus      String     @default("NOT_SENT") // NOT_SENT, SENT, DELIVERED, VIEWED, ACCEPTED, MAYBE, DECLINED, CANCELLED
+  
+  sendDate            DateTime?
+  receiveDate         DateTime?
+
+  sentDate            DateTime?
+  firstViewedDate     DateTime?
+  lastViewedDate      DateTime?
+  responseDate        DateTime?
+  
+  attendingGuests     Int        @default(0)
+  notes               String?    @db.Text
+  
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  activities          InvitationActivity[]
+  checkIn             CheckIn?
+  generatedPdf        GeneratedInvitationPdf?
+  design              InvitationDesign?
+
+  @@unique([invitationId, email])
+  @@unique([invitationId, phone])
+}
+
+model GeneratedInvitationPdf {
+  id            Int      @id @default(autoincrement())
+  recipientId   Int      @unique
+  recipient     Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  invitationId  Int
+  invitation    Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  
+  filePath      String
+  generatedAt   DateTime @default(now())
+}
+
+model InvitationActivity {
+  id            Int      @id @default(autoincrement())
+  recipientId   Int
+  recipient     Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  userId        Int?
+  user          User?     @relation(fields: [userId], references: [id])
+  
+  action        String    // SENT, VIEWED, RSVP_ACCEPTED, etc.
+  metadata      String?   @db.Text // JSON string for extra info
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+}
+
+model CheckIn {
+  id            Int      @id @default(autoincrement())
+  recipientId   Int      @unique
+  recipient     Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  checkInTime   DateTime @default(now())
+  notes         String?
+}

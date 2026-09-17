@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); prisma.templateDefaultConfiguration.updateMany({where: {templateId: 1}, data: {yPosition: 0.57}}).then(() => console.log('Y Pos updated to 0.57')).finally(() => prisma.$disconnect());
