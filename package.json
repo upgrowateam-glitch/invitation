@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "npm install --prefix client && npm install --prefix server",
-    "build": "npm run build --prefix client",
-    "start": "npm start --prefix server"
-  },
+  "postinstall": "npm install --include=dev --prefix client && npm install --include=dev --prefix server",
+  "build": "npm run build --prefix client && npm run prisma:generate --prefix server",
+  "start": "npm start --prefix server"
+},
   "engines": {
     "node": ">=20"
   }
