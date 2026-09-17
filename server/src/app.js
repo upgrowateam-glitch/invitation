@@ -50,6 +50,11 @@ const os = require('os');
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 app.use('/uploads', express.static(path.join(os.tmpdir(), 'uploads')));
 
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

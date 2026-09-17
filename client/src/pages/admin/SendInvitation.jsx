@@ -249,27 +249,10 @@ const SendInvitation = () => {
       };
 
       let recipient;
-      if (MODE === "prototype") {
-        const db = storageService.getData();
-        const newId = db.recipients.length > 0 ? Math.max(...db.recipients.map(r => r.id)) + 1 : 1;
-        recipient = {
-          id: newId,
-          ...payload,
-          senderId: 1,
-          invitationId: 1,
-          token: Math.random().toString(36).substring(2, 15),
-          responseStatus: "SENT",
-          sentDate: new Date().toISOString(),
-          generatedPdfPath: base64Image
-        };
-        db.recipients.push(recipient);
-        storageService.saveData(db);
-      } else {
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await axios.post("/api/recipients", payload, { headers, withCredentials: true });
-        recipient = res.data;
-      }
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axios.post("/api/recipients", payload, { headers, withCredentials: true });
+      recipient = res.data;
 
       const link = `${window.location.origin}/invitation/${recipient.token}`;
       
@@ -298,8 +281,9 @@ const SendInvitation = () => {
           return handleSend(e, true);
         }
       } else {
-        alert("Error sending invitation");
-        console.error(err);
+        const errorDetails = err.response?.data?.message || err.response?.data?.error || err.message || "Failed to communicate with Express API";
+        alert(`API Error (${err.response?.status || 'Network'}): ${errorDetails}`);
+        console.error("Send Invitation API Failure:", err);
       }
       return null;
     } finally {
