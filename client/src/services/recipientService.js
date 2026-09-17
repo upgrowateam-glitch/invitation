@@ -32,7 +32,8 @@ export const recipientService = {
         id: db.recipients.length + 1,
         ...data,
         token: uuidv4(),
-        responseStatus: 'NOT_SENT'
+        responseStatus: 'SENT',
+        sentDate: new Date().toISOString()
       };
       db.recipients.push(newRec);
       storageService.saveData(db);

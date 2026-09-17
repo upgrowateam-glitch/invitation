@@ -135,8 +135,8 @@ const createRecipient = async (req, res) => {
         token,
         maxAllowedGuests: maxAllowedGuests || 0,
         notes,
-        responseStatus: responseStatus || 'NOT_SENT',
-        sentDate: sentDate ? new Date(sentDate) : null,
+        responseStatus: responseStatus || 'SENT',
+        sentDate: sentDate ? new Date(sentDate) : new Date(),
         sendDate: sendDate ? new Date(sendDate) : (email ? new Date() : null),
         receiveDate: receiveDate ? new Date(receiveDate) : null,
         design: designConfiguration && templateId ? {

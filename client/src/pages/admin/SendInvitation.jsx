@@ -157,7 +157,9 @@ const SendInvitation = () => {
         designConfiguration: formData.designConfiguration,
         forceCreate: isForce,
         base64Image,
-        ogBase64Image
+        ogBase64Image,
+        responseStatus: "SENT",
+        sentDate: new Date().toISOString()
       };
 
       let recipient;
