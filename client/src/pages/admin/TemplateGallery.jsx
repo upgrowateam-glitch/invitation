@@ -215,16 +215,23 @@ const TemplateGallery = () => {
                     )
                   ) : (
                     <img 
-                      src={
-                        (template.thumbnailPath || template.originalFilePath || "").endsWith('.pdf') 
-                          ? (template.thumbnailPath || template.originalFilePath).replace('.pdf', '.png')
-                          : (template.thumbnailPath || template.originalFilePath)
-                      } 
+                      src={(() => {
+                        let url = template.thumbnailPath || template.originalFilePath || "";
+                        if (url.endsWith('.pdf')) url = url.replace('.pdf', '.png');
+                        if (url.startsWith('http') || url.startsWith('data:')) return url;
+                        if (!url.startsWith('/')) url = '/' + url;
+                        const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
+                          ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
+                          : (typeof window !== "undefined" ? window.location.origin : "");
+                        return `${origin}${url}`;
+                      })()} 
                       alt={template.name}
                       className="w-full h-full object-contain pointer-events-none"
                       onError={(e) => {
-                        if (e.target.src.endsWith('.png')) {
-                          e.target.src = e.target.src.replace('.png', '.pdf');
+                        if (!e.target.dataset.triedFallback) {
+                          e.target.dataset.triedFallback = "true";
+                          const origin = typeof window !== "undefined" ? window.location.origin : "";
+                          e.target.src = `${origin}/uploads/templates/bni-template.png`;
                         }
                       }}
                     />

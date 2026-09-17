@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "npm install --include=dev --prefix client && npm install --include=dev --prefix server",
-    "build": "npm run build --prefix client && npm run prisma:generate --prefix server && npm run prisma:deploy --prefix server",
+    "build": "npm run build --prefix client && node copy-build-assets.js && npm run prisma:generate --prefix server && npm run prisma:deploy --prefix server",
     "start": "npm start --prefix server"
   },
   "engines": {

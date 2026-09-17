@@ -418,8 +418,11 @@ const SendInvitation = () => {
                       let url = formData.templateUrl || "";
                       if (url.endsWith(".pdf")) url = url.replace(".pdf", ".png");
                       if (url.startsWith("http") || url.startsWith("data:")) return url;
-                      const baseUrl = import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "";
-                      return baseUrl + url;
+                      if (!url.startsWith("/")) url = "/" + url;
+                      const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
+                        ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
+                        : (typeof window !== "undefined" ? window.location.origin : "");
+                      return `${origin}${url}`;
                     })()} 
                     alt="Template" 
                     style={{ 
@@ -433,11 +436,14 @@ const SendInvitation = () => {
                     }}
                     crossOrigin="anonymous"
                     onError={(e) => {
-                      if (!e.target.dataset.triedPng && e.target.src.includes('.pdf')) {
-                        e.target.dataset.triedPng = "true";
-                        e.target.src = e.target.src.replace('.pdf', '.png');
-                      } else {
-                        console.warn("Template image load warning:", e.target.src);
+                      if (!e.target.dataset.triedFallback) {
+                        e.target.dataset.triedFallback = "true";
+                        if (e.target.src.includes('.pdf')) {
+                          e.target.src = e.target.src.replace('.pdf', '.png');
+                        } else {
+                          const origin = typeof window !== "undefined" ? window.location.origin : "";
+                          e.target.src = `${origin}/uploads/templates/bni-template.png`;
+                        }
                       }
                     }}
                   />

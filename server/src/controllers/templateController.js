@@ -17,8 +17,13 @@ const getTemplates = async (req, res) => {
       let imagePath = t.originalFilePath;
       if (imagePath && imagePath.endsWith('.pdf')) {
         const pngPath = imagePath.replace('.pdf', '.png');
-        const absPngPath = path.join(__dirname, '../../..', pngPath);
-        if (fs.existsSync(absPngPath)) {
+        const candidates = [
+          path.join(__dirname, '../../..', pngPath),
+          path.join(process.cwd(), pngPath),
+          path.join(process.cwd(), 'server', pngPath),
+          path.join(process.cwd(), 'client/dist', pngPath)
+        ];
+        if (candidates.some(p => fs.existsSync(p))) {
           imagePath = pngPath;
         }
       }

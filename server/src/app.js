@@ -46,9 +46,20 @@ app.use(morgan('dev'));
 
 const os = require('os');
 
-// Static uploads
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
-app.use('/uploads', express.static(path.join(os.tmpdir(), 'uploads')));
+// Static uploads - search all candidate locations
+const uploadCandidates = [
+  path.join(__dirname, '../../uploads'),
+  path.join(process.cwd(), 'uploads'),
+  path.join(process.cwd(), 'server/uploads'),
+  path.join(__dirname, '../../client/dist/uploads'),
+  path.join(os.tmpdir(), 'uploads')
+];
+
+uploadCandidates.forEach(dir => {
+  if (fs.existsSync(dir)) {
+    app.use('/uploads', express.static(dir));
+  }
+});
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -138,8 +149,11 @@ app.use(express.static(clientDistPath));
 
 // Catch-all to serve index.html for React Router
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api')) {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
     return res.sendFile(path.join(clientDistPath, 'index.html'));
+  }
+  if (req.path.startsWith('/uploads')) {
+    return res.status(404).send('File not found');
   }
   next();
 });
