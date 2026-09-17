@@ -73,15 +73,7 @@ const AdminLayout = ({ children }) => {
           
           <div className="flex-1" />
           
-          <div className="flex items-center space-x-4">
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-semibold text-slate-700 leading-tight">{user?.name}</span>
-              <span className="text-xs text-slate-500">{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : user?.role === 'ADMIN' ? 'Administrator' : 'User'}</span>
-            </div>
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-              <span className="text-primary font-bold text-sm">{user?.name?.charAt(0)?.toUpperCase()}</span>
-            </div>
-          </div>
+
         </header>
         
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
