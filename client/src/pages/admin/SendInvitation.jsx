@@ -414,11 +414,13 @@ const SendInvitation = () => {
                   }}
                 >
                   <img 
-                    src={
-                      formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
-                        ? formData.templateUrl 
-                        : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl
-                    } 
+                    src={(() => {
+                      let url = formData.templateUrl || "";
+                      if (url.endsWith(".pdf")) url = url.replace(".pdf", ".png");
+                      if (url.startsWith("http") || url.startsWith("data:")) return url;
+                      const baseUrl = import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "";
+                      return baseUrl + url;
+                    })()} 
                     alt="Template" 
                     style={{ 
                       width: "100%", 
@@ -431,8 +433,12 @@ const SendInvitation = () => {
                     }}
                     crossOrigin="anonymous"
                     onError={(e) => {
-                      console.error("Image failed to load:", e.target.src);
-                      e.target.style.display = 'none';
+                      if (!e.target.dataset.triedPng && e.target.src.includes('.pdf')) {
+                        e.target.dataset.triedPng = "true";
+                        e.target.src = e.target.src.replace('.pdf', '.png');
+                      } else {
+                        console.warn("Template image load warning:", e.target.src);
+                      }
                     }}
                   />
                   <div style={{

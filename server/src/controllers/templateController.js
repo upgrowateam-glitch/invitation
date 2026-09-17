@@ -12,7 +12,24 @@ const getTemplates = async (req, res) => {
       include: { defaultConfig: true },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(templates);
+
+    const sanitizedTemplates = templates.map(t => {
+      let imagePath = t.originalFilePath;
+      if (imagePath && imagePath.endsWith('.pdf')) {
+        const pngPath = imagePath.replace('.pdf', '.png');
+        const absPngPath = path.join(__dirname, '../../..', pngPath);
+        if (fs.existsSync(absPngPath)) {
+          imagePath = pngPath;
+        }
+      }
+      return {
+        ...t,
+        originalFilePath: imagePath,
+        thumbnailPath: imagePath
+      };
+    });
+
+    res.json(sanitizedTemplates);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching templates' });
   }

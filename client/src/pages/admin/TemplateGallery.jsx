@@ -214,19 +214,20 @@ const TemplateGallery = () => {
                       <span className="text-xs text-gray-400">Loading preview...</span>
                     )
                   ) : (
-                    template.fileType === 'PDF' ? (
-                      <iframe 
-                        src={`${template.thumbnailPath || template.originalFilePath}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
-                        className="w-full h-full border-0 pointer-events-none"
-                        title={template.name}
-                      />
-                    ) : (
-                      <img 
-                        src={template.originalFilePath} 
-                        alt={template.name}
-                        className="w-full h-full object-contain pointer-events-none"
-                      />
-                    )
+                    <img 
+                      src={
+                        (template.thumbnailPath || template.originalFilePath || "").endsWith('.pdf') 
+                          ? (template.thumbnailPath || template.originalFilePath).replace('.pdf', '.png')
+                          : (template.thumbnailPath || template.originalFilePath)
+                      } 
+                      alt={template.name}
+                      className="w-full h-full object-contain pointer-events-none"
+                      onError={(e) => {
+                        if (e.target.src.endsWith('.png')) {
+                          e.target.src = e.target.src.replace('.png', '.pdf');
+                        }
+                      }}
+                    />
                   )}
                   
                   {/* Hover Overlay */}
