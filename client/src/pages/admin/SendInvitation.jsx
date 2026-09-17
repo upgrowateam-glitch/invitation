@@ -205,6 +205,7 @@ const SendInvitation = () => {
       templateId: template.id,
       templateName: template.name,
       templateUrl: template.originalFilePath,
+      fileType: template.fileType || (template.originalFilePath?.toLowerCase().endsWith('.pdf') ? 'PDF' : 'IMAGE'),
       designConfiguration: cfg
     }));
 
@@ -458,27 +459,39 @@ const SendInvitation = () => {
                     outlineColor: 'transparent'
                   }}
                 >
-                  <img 
-                    src={
-                      formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
-                        ? formData.templateUrl 
-                        : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl
-                    } 
-                    alt="Template" 
-                    style={{ 
-                      width: "100%", 
-                      display: "block",
-                      color: '#000000',
-                      borderColor: 'transparent',
-                      boxShadow: 'none',
-                      textShadow: 'none',
-                      outlineColor: 'transparent'
-                    }}
-                    crossOrigin="anonymous"
-                    onError={(e) => {
-                      console.error("Image failed to load:", e.target.src);
-                    }}
-                  />
+                  {formData.fileType === 'PDF' || formData.templateUrl?.toLowerCase().endsWith('.pdf') ? (
+                    <iframe 
+                      src={
+                        (formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
+                          ? formData.templateUrl 
+                          : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl) + "#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
+                      } 
+                      className="w-full aspect-[1/1.4] border-0 pointer-events-none"
+                      title={formData.templateName || "Template PDF"}
+                    />
+                  ) : (
+                    <img 
+                      src={
+                        formData.templateUrl?.startsWith("http") || formData.templateUrl?.startsWith("data:") 
+                          ? formData.templateUrl 
+                          : (import.meta.env.VITE_API_URL?.startsWith("http") ? import.meta.env.VITE_API_URL.replace("/api", "") : "") + formData.templateUrl
+                      } 
+                      alt="Template" 
+                      style={{ 
+                        width: "100%", 
+                        display: "block",
+                        color: '#000000',
+                        borderColor: 'transparent',
+                        boxShadow: 'none',
+                        textShadow: 'none',
+                        outlineColor: 'transparent'
+                      }}
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e.target.src);
+                      }}
+                    />
+                  )}
                   <div style={{
                     ...overlayStyle,
                     borderColor: 'transparent',
