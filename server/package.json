@@ -2,11 +2,14 @@
   "name": "server",
   "version": "1.0.0",
   "main": "server.js",
+  
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
     "prisma:generate": "prisma generate",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prisma:deploy": "prisma migrate deploy"
+  
+
   },
   "keywords": [],
   "author": "",
