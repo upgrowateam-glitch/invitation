@@ -81,6 +81,95 @@ app.get('/uploads/templates/:filename', (req, res, next) => {
   next();
 });
 
+// Serve or dynamically generate social preview images (1200x630 JPEG for Open Graph / WhatsApp)
+app.get('/uploads/social/:filename', async (req, res, next) => {
+  const filename = req.params.filename;
+  
+  // 1. Check existing candidate directories
+  for (const dir of uploadCandidates) {
+    const candidatePath = path.join(dir, 'social', filename);
+    if (fs.existsSync(candidatePath)) {
+      res.contentType('image/jpeg');
+      return res.sendFile(candidatePath);
+    }
+  }
+
+  // 2. Dynamic generation on-the-fly if missing
+  try {
+    const tokenMatch = filename.replace(/^og-invite-/, '').replace(/^invite-/, '').replace(/\.\w+$/, '');
+    
+    let recipient = await prisma.recipient.findUnique({
+      where: { token: tokenMatch }
+    });
+
+    if (!recipient && tokenMatch.length < 32) {
+      recipient = await prisma.recipient.findFirst({
+        where: { generatedPdfPath: { contains: tokenMatch } }
+      });
+    }
+
+    let sourceBuffer = null;
+
+    if (recipient && recipient.generatedPdfPath) {
+      const relativePath = recipient.generatedPdfPath.replace(/^\//, '');
+      const searchLocations = [
+        path.join(__dirname, '../../', relativePath),
+        path.join(process.cwd(), relativePath),
+        path.join(process.cwd(), 'server', relativePath),
+        path.join(__dirname, '../../client/dist', relativePath),
+        path.join(os.tmpdir(), relativePath)
+      ];
+      const foundLoc = searchLocations.find(p => fs.existsSync(p));
+      if (foundLoc) {
+        sourceBuffer = fs.readFileSync(foundLoc);
+      }
+    }
+
+    if (!sourceBuffer) {
+      const templateFallbacks = [
+        path.join(__dirname, '../../uploads/templates/bni-template.png'),
+        path.join(process.cwd(), 'uploads/templates/bni-template.png'),
+        path.join(process.cwd(), 'server/uploads/templates/bni-template.png')
+      ];
+      const foundTf = templateFallbacks.find(p => fs.existsSync(p));
+      if (foundTf) {
+        sourceBuffer = fs.readFileSync(foundTf);
+      }
+    }
+
+    if (sourceBuffer) {
+      const sharp = require('sharp');
+      const portraitResized = await sharp(sourceBuffer)
+        .resize({ height: 550, fit: 'inside' })
+        .toBuffer();
+
+      const socialBuffer = await sharp({
+        create: {
+          width: 1200,
+          height: 630,
+          channels: 3,
+          background: { r: 248, g: 250, b: 252 }
+        }
+      })
+      .composite([{ input: portraitResized, gravity: 'center' }])
+      .jpeg({ quality: 88 })
+      .toBuffer();
+
+      // Save to candidate directory for subsequent requests
+      const targetDir = path.join(uploadCandidates[0], 'social');
+      if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+      fs.writeFileSync(path.join(targetDir, filename), socialBuffer);
+
+      res.contentType('image/jpeg');
+      return res.send(socialBuffer);
+    }
+  } catch (err) {
+    console.error('Dynamic social image generation error:', err);
+  }
+
+  next();
+});
+
 uploadCandidates.forEach(dir => {
   if (fs.existsSync(dir)) {
     app.use('/uploads', express.static(dir));
@@ -117,22 +206,12 @@ app.get('/invitation/:token', async (req, res, next) => {
     let html = fs.readFileSync(path.join(clientDistPath, 'index.html'), 'utf8');
 
     const clientHost = req.headers['x-forwarded-host'] || req.headers.host || '';
-    const baseUrl = process.env.CLIENT_URL || (clientHost.includes('localhost') ? 'https://carl-fully-boat-throw.trycloudflare.com' : `https://${clientHost}`);
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const baseUrl = process.env.CLIENT_URL || (clientHost.includes('localhost') ? 'http://localhost:5173' : `${protocol}://${clientHost}`);
     
-    // Check if generatedPdfPath exists; it might be null for older records
-    if (!recipient.generatedPdfPath) {
-      return next();
-    }
-    
-    const isAbsolute = recipient.generatedPdfPath.startsWith('http');
-    let ogPath = recipient.generatedPdfPath;
-    if (ogPath.includes('/invite-')) {
-      ogPath = ogPath.replace('/invite-', '/og-invite-');
-    }
-    const imageUrl = isAbsolute ? ogPath : `${baseUrl}${ogPath}`;
+    const version = recipient.updatedAt ? new Date(recipient.updatedAt).getTime() : Date.now();
+    const socialImageUrl = `${baseUrl}/uploads/social/invite-${token}.jpg?v=${version}`;
 
-    const hostName = recipient.senderName || recipient.invitation?.hostName || 'us';
-    
     // Properly escape dynamic values for HTML attributes
     const escapeHtml = (unsafe) => {
       if (!unsafe) return '';
@@ -147,21 +226,26 @@ app.get('/invitation/:token', async (req, res, next) => {
     const safeReceiver = escapeHtml(recipient.name);
     
     const ogTitle = `BNI Invitation for ${safeReceiver}`;
-    const ogDescription = `You are cordially invited`;
+    const ogDescription = `You are cordially invited to join us. Click to view your personalized invitation.`;
+    const canonicalUrl = `${baseUrl}/invitation/${token}`;
 
     const ogTags = `
     <meta property="og:title" content="${ogTitle}" />
     <meta property="og:description" content="${ogDescription}" />
-    <meta property="og:image" content="${imageUrl}" />
-    <meta property="og:url" content="${baseUrl}/invitation/${token}" />
+    <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="${socialImageUrl}" />
+    <meta property="og:image:secure_url" content="${socialImageUrl}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${ogTitle}" />
     <meta name="twitter:description" content="${ogDescription}" />
-    <meta name="twitter:image" content="${imageUrl}" />
+    <meta name="twitter:image" content="${socialImageUrl}" />
     `;
 
-    console.log('[DEBUG WhatsApp OG]', { baseUrl, imageUrl, token, title: ogTitle });
+    console.log('[DEBUG WhatsApp OG]', { baseUrl, socialImageUrl, token, title: ogTitle });
 
     html = html.replace('</head>', `${ogTags}</head>`);
     return res.send(html);

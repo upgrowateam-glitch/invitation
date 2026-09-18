@@ -5,6 +5,65 @@ const { generateFinalPdf } = require('./templateController');
 const excelJS = require('exceljs');
 const { Readable } = require('stream');
 
+const saveSocialPreviewImage = async ({ token, fileId, mainBuffer, ogBase64Image }) => {
+  const fs = require('fs');
+  const path = require('path');
+  const os = require('os');
+  const sharp = require('sharp');
+
+  const socialFileName = `invite-${token}.jpg`;
+  const candidateSocialDirs = [
+    path.join(__dirname, '../../../uploads/social'),
+    path.join(process.cwd(), 'uploads/social'),
+    path.join(process.cwd(), 'server/uploads/social'),
+    path.join(__dirname, '../../../client/dist/uploads/social'),
+    path.join(os.tmpdir(), 'uploads/social')
+  ];
+
+  let ogBuffer = null;
+  if (ogBase64Image && typeof ogBase64Image === 'string' && ogBase64Image.startsWith('data:image')) {
+    const ogBase64Data = ogBase64Image.replace(/^data:image\/\w+;base64,/, '');
+    ogBuffer = Buffer.from(ogBase64Data, 'base64');
+  } else if (mainBuffer) {
+    try {
+      const portraitResized = await sharp(mainBuffer)
+        .resize({ height: 550, fit: 'inside' })
+        .toBuffer();
+
+      ogBuffer = await sharp({
+        create: {
+          width: 1200,
+          height: 630,
+          channels: 3,
+          background: { r: 248, g: 250, b: 252 }
+        }
+      })
+      .composite([{ input: portraitResized, gravity: 'center' }])
+      .jpeg({ quality: 88 })
+      .toBuffer();
+    } catch (err) {
+      console.warn('Sharp social image generation failed:', err.message);
+    }
+  }
+
+  if (ogBuffer) {
+    for (const targetDir of candidateSocialDirs) {
+      try {
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        fs.writeFileSync(path.join(targetDir, socialFileName), ogBuffer);
+        
+        if (fileId) {
+          const genDir = path.join(path.dirname(targetDir), 'generated');
+          if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
+          fs.writeFileSync(path.join(genDir, `og-invite-${fileId}.jpg`), ogBuffer);
+        }
+      } catch (err) {
+        console.warn(`Could not save social preview to ${targetDir}:`, err.message);
+      }
+    }
+  }
+};
+
 // Get all recipients for the logged-in sender
 // Can filter by invitationId if provided
 const getRecipients = async (req, res) => {
@@ -84,15 +143,18 @@ const createRecipient = async (req, res) => {
     // Generating secure token
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Auto-generate the personalized PDF immediately and securely save it
+    // Auto-generate the personalized PDF/image immediately and securely save it
     let generatedPdfPath = null;
+    let mainBuffer = null;
+    let fileId = null;
+
     if (req.body.base64Image) {
       const match = req.body.base64Image.match(/^data:image\/(\w+);base64,/);
       const ext = match && match[1] === 'jpeg' ? 'jpg' : 'png';
       const base64Data = req.body.base64Image.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
+      mainBuffer = Buffer.from(base64Data, 'base64');
       
-      const fileId = crypto.randomBytes(16).toString('hex');
+      fileId = crypto.randomBytes(16).toString('hex');
       const fileName = `invite-${fileId}.${ext}`;
       const fs = require('fs');
       const path = require('path');
@@ -105,16 +167,7 @@ const createRecipient = async (req, res) => {
       for (const targetDir of [primaryDir, tmpDir]) {
         try {
           if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-          fs.writeFileSync(path.join(targetDir, fileName), buffer);
-
-          if (req.body.ogBase64Image) {
-            const ogMatch = req.body.ogBase64Image.match(/^data:image\/(\w+);base64,/);
-            const ogExt = ogMatch && ogMatch[1] === 'jpeg' ? 'jpg' : 'png';
-            const ogBase64Data = req.body.ogBase64Image.replace(/^data:image\/\w+;base64,/, '');
-            const ogBuffer = Buffer.from(ogBase64Data, 'base64');
-            const ogFileName = `og-invite-${fileId}.${ogExt}`;
-            fs.writeFileSync(path.join(targetDir, ogFileName), ogBuffer);
-          }
+          fs.writeFileSync(path.join(targetDir, fileName), mainBuffer);
           
           generatedPdfPath = `/uploads/generated/${fileName}`;
           savedToFile = true;
@@ -131,9 +184,37 @@ const createRecipient = async (req, res) => {
       try {
         const { generateFinalPdf } = require('./templateController');
         generatedPdfPath = await generateFinalPdf(templateId, name, designConfiguration);
+        if (generatedPdfPath && !generatedPdfPath.startsWith('data:')) {
+          const fs = require('fs');
+          const path = require('path');
+          const os = require('os');
+          const relativePath = generatedPdfPath.replace(/^\//, '');
+          const searchLocations = [
+            path.join(__dirname, '../../../', relativePath),
+            path.join(process.cwd(), relativePath),
+            path.join(process.cwd(), 'server', relativePath),
+            path.join(os.tmpdir(), relativePath)
+          ];
+          const foundLoc = searchLocations.find(loc => fs.existsSync(loc));
+          if (foundLoc) {
+            mainBuffer = fs.readFileSync(foundLoc);
+          }
+        }
       } catch (err) {
         console.warn('Error generating final PDF fallback:', err.message);
       }
+    }
+
+    // Save dedicated 1200x630 social preview image (/uploads/social/invite-TOKEN.jpg)
+    try {
+      await saveSocialPreviewImage({
+        token,
+        fileId,
+        mainBuffer,
+        ogBase64Image: req.body.ogBase64Image
+      });
+    } catch (socialErr) {
+      console.warn('Error saving social preview image:', socialErr.message);
     }
 
     // Check if template exists for relational design create
