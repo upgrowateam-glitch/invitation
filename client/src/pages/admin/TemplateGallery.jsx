@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Check, Search, Upload, Filter, MoreVertical, Archive, Play, FileText, Image as ImageIcon } from 'lucide-react';
+import { Plus, Check, Search, Upload, Filter, MoreVertical, Archive, Play, FileText, Image as ImageIcon, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { pdfService } from '../../services/pdfService';
+import { readImageDimensions, checkResolutionQuality } from '../../utils/imageUtils';
 
 const TemplateGallery = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const TemplateGallery = () => {
   // Upload Modal State
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: '', description: '', category: 'General Invitation', file: null });
+  const [fileDimensions, setFileDimensions] = useState({ width: null, height: null });
+  const [resolutionInfo, setResolutionInfo] = useState({ isFullHD: false, isRecommended: true, warningMessage: null });
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -67,6 +70,32 @@ const TemplateGallery = () => {
     return () => clearTimeout(timer);
   }, [templates, receiverName, isSelectionMode]);
 
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) {
+      setNewTemplate(prev => ({ ...prev, file: null }));
+      setFileDimensions({ width: null, height: null });
+      setResolutionInfo({ isFullHD: false, isRecommended: true, warningMessage: null });
+      return;
+    }
+
+    setNewTemplate(prev => ({ ...prev, file: selectedFile }));
+
+    if (selectedFile.type.startsWith("image/")) {
+      try {
+        const dims = await readImageDimensions(selectedFile);
+        setFileDimensions({ width: dims.width, height: dims.height });
+        const quality = checkResolutionQuality(dims.width, dims.height);
+        setResolutionInfo(quality);
+      } catch (err) {
+        console.warn("Could not read image dimensions:", err);
+      }
+    } else {
+      setFileDimensions({ width: null, height: null });
+      setResolutionInfo({ isFullHD: false, isRecommended: true, warningMessage: null });
+    }
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!newTemplate.name || !newTemplate.file) return;
@@ -84,6 +113,8 @@ const TemplateGallery = () => {
       });
       setShowUploadModal(false);
       setNewTemplate({ name: '', description: '', category: 'General Invitation', file: null });
+      setFileDimensions({ width: null, height: null });
+      setResolutionInfo({ isFullHD: false, isRecommended: true, warningMessage: null });
       navigate(`/invitation/admin/templates/${res.data.id}/edit`);
     } catch (err) {
       alert(err.response?.data?.message || 'Error uploading template');
@@ -190,69 +221,91 @@ const TemplateGallery = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredTemplates.map(template => (
-              <div key={template.id} className="group flex flex-col bg-white rounded-xl shadow-sm border hover:shadow-md transition-all overflow-hidden relative">
-                
-                {/* Badges */}
-                <div className="absolute top-2 left-2 z-10 flex space-x-1">
-                  {template.isSystemTemplate && (
-                    <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-purple-200">SYSTEM</span>
-                  )}
-                  {getFileIcon(template.fileType)}
-                </div>
+            {filteredTemplates.map(template => {
+              const isFullHD = template.width && template.height ? (
+                (template.height >= template.width && template.width >= 1080 && template.height >= 1920) ||
+                (template.width > template.height && template.width >= 1920 && template.height >= 1080)
+              ) : false;
 
-                {/* Thumbnail / Canvas */}
-                <div className="bg-gray-100 aspect-[1/1.4] relative overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => handleSelectTemplate(template)}>
-                  {isSelectionMode && !template.isArchived ? (
-                    previewUrls[template.id] ? (
-                      <iframe 
-                        src={previewUrls[template.id] + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit'} 
-                        className="w-full h-full border-0 pointer-events-none" 
-                        title={template.name}
-                      ></iframe>
-                    ) : (
-                      <span className="text-xs text-gray-400">Loading preview...</span>
-                    )
-                  ) : (
-                    <img 
-                      src={(() => {
-                        let url = template.thumbnailPath || template.originalFilePath || "";
-                        if (url.endsWith('.pdf')) url = url.replace('.pdf', '.png');
-                        if (url.startsWith('http') || url.startsWith('data:')) return url;
-                        if (!url.startsWith('/')) url = '/' + url;
-                        const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
-                          ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
-                          : (typeof window !== "undefined" ? window.location.origin : "");
-                        return `${origin}${url}`;
-                      })()} 
-                      alt={template.name}
-                      className="w-full h-full object-contain pointer-events-none"
-                      onError={(e) => {
-                        if (!e.target.dataset.triedFallback) {
-                          e.target.dataset.triedFallback = "true";
-                          const origin = typeof window !== "undefined" ? window.location.origin : "";
-                          e.target.src = `${origin}/uploads/templates/bni-template.png`;
-                        }
-                      }}
-                    />
-                  )}
+              return (
+                <div key={template.id} className="group flex flex-col bg-white rounded-xl shadow-sm border hover:shadow-md transition-all overflow-hidden relative">
                   
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button className="bg-white text-gray-900 rounded-full px-4 py-2 font-medium text-sm shadow-lg flex items-center space-x-1 hover:scale-105 transition-transform">
-                      {isSelectionMode ? <Check size={16} /> : <Play size={16} />}
-                      <span>{isSelectionMode ? 'Select' : 'Customize'}</span>
-                    </button>
+                  {/* Badges */}
+                  <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 items-center">
+                    {template.isSystemTemplate && (
+                      <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-purple-200">SYSTEM</span>
+                    )}
+                    {isFullHD && (
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-emerald-200 flex items-center space-x-1">
+                        <ShieldCheck size={12} className="inline mr-0.5" />
+                        <span>Full HD</span>
+                      </span>
+                    )}
+                    <span className="bg-white/90 backdrop-blur-xs p-1 rounded shadow-sm">
+                      {getFileIcon(template.fileType)}
+                    </span>
+                  </div>
+
+                  {/* Thumbnail / Canvas */}
+                  <div className="bg-gray-100 aspect-[1/1.4] relative overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => handleSelectTemplate(template)}>
+                    {isSelectionMode && !template.isArchived ? (
+                      previewUrls[template.id] ? (
+                        <iframe 
+                          src={previewUrls[template.id] + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit'} 
+                          className="w-full h-full border-0 pointer-events-none" 
+                          title={template.name}
+                        ></iframe>
+                      ) : (
+                        <span className="text-xs text-gray-400">Loading preview...</span>
+                      )
+                    ) : (
+                      <img 
+                        src={(() => {
+                          let url = template.thumbnailPath || template.originalFilePath || "";
+                          if (url.endsWith('.pdf')) url = url.replace('.pdf', '.png');
+                          if (url.startsWith('http') || url.startsWith('data:')) return url;
+                          if (!url.startsWith('/')) url = '/' + url;
+                          const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
+                            ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
+                            : (typeof window !== "undefined" ? window.location.origin : "");
+                          return `${origin}${url}`;
+                        })()} 
+                        alt={template.name}
+                        className="w-full h-full object-contain pointer-events-none"
+                        onError={(e) => {
+                          if (!e.target.dataset.triedFallback) {
+                            e.target.dataset.triedFallback = "true";
+                            const origin = typeof window !== "undefined" ? window.location.origin : "";
+                            e.target.src = `${origin}/uploads/templates/bni-template.png`;
+                          }
+                        }}
+                      />
+                    )}
+                    
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button className="bg-white text-gray-900 rounded-full px-4 py-2 font-medium text-sm shadow-lg flex items-center space-x-1 hover:scale-105 transition-transform">
+                        {isSelectionMode ? <Check size={16} /> : <Play size={16} />}
+                        <span>{isSelectionMode ? 'Select' : 'Customize'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Footer Info */}
+                  <div className="p-3 border-t">
+                    <h3 className="font-semibold text-gray-800 text-sm truncate" title={template.name}>{template.name}</h3>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mt-0.5">
+                      <span className="truncate">{template.category || 'General'}</span>
+                      {template.width && template.height && (
+                        <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0">
+                          {template.width}×{template.height}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                {/* Footer Info */}
-                <div className="p-3 border-t">
-                  <h3 className="font-semibold text-gray-800 text-sm truncate" title={template.name}>{template.name}</h3>
-                  <p className="text-xs text-gray-500 truncate">{template.category || 'General'}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -261,7 +314,7 @@ const TemplateGallery = () => {
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-800">Upload Custom Template</h2>
             </div>
             <form onSubmit={handleUpload} className="p-6 space-y-4">
@@ -275,6 +328,7 @@ const TemplateGallery = () => {
                   placeholder="e.g. Wedding Invite 2024"
                 />
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -290,18 +344,63 @@ const TemplateGallery = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">File * (PDF/PNG/JPG)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">File * (PNG/JPG/PDF)</label>
                   <input 
                     type="file" required 
-                    accept="application/pdf,image/png,image/jpeg"
-                    onChange={e => setNewTemplate({...newTemplate, file: e.target.files[0]})}
+                    accept="image/png,image/jpeg,application/pdf"
+                    onChange={handleFileChange}
                     className="w-full text-sm"
                   />
                 </div>
               </div>
-              <div className="pt-4 flex justify-end space-x-3">
-                <button type="button" onClick={() => setShowUploadModal(false)} className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-                <button type="submit" disabled={isUploading} className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium disabled:opacity-50 flex items-center space-x-2">
+
+              {/* Detected Resolution Info & Low-Res Warning */}
+              {fileDimensions.width && fileDimensions.height && (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between bg-slate-50 border p-2.5 rounded-lg text-xs">
+                    <span className="font-medium text-slate-700">Detected Source Resolution:</span>
+                    <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border">
+                      {fileDimensions.width} × {fileDimensions.height} px
+                    </span>
+                  </div>
+
+                  {resolutionInfo.warningMessage && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs flex items-start space-x-2 animate-in fade-in">
+                      <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1">
+                        <p className="font-semibold text-amber-900">Low Resolution Warning</p>
+                        <p>{resolutionInfo.warningMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {resolutionInfo.isFullHD && (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs flex items-center space-x-2">
+                      <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                      <span className="font-medium">Full-HD Resolution Verified ({fileDimensions.width}×{fileDimensions.height})</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-4 flex justify-end space-x-3 border-t">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setNewTemplate({ name: '', description: '', category: 'General Invitation', file: null });
+                    setFileDimensions({ width: null, height: null });
+                    setResolutionInfo({ isFullHD: false, isRecommended: true, warningMessage: null });
+                  }} 
+                  className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isUploading} 
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium text-sm disabled:opacity-50 flex items-center space-x-2"
+                >
                   {isUploading ? <span>Uploading...</span> : <>
                     <Upload size={18} />
                     <span>Upload & Edit</span>

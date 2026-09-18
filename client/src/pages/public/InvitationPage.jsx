@@ -66,8 +66,25 @@ const InvitationPage = () => {
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col items-center">
         
         {recipient.generatedPdfPath ? (
-          <div className="w-full flex justify-center bg-gray-50 border-b">
-            <img src={imageUrl} alt="Invitation Card" className="w-full h-auto block" />
+          <div className="w-full flex flex-col items-center bg-gray-50 border-b relative group">
+            <img 
+              src={imageUrl} 
+              alt="Invitation Card" 
+              style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+              className="block shadow-sm" 
+            />
+            <div className="w-full bg-slate-900/90 text-white py-2 px-4 flex items-center justify-between text-xs">
+              <span className="font-medium text-slate-300">Full-HD Personalized Invitation</span>
+              <a 
+                href={imageUrl} 
+                target="_blank" 
+                rel="noreferrer" 
+                download={`invitation-${recipient.name.replace(/\s+/g, '_')}.png`}
+                className="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded font-medium transition-colors inline-flex items-center space-x-1"
+              >
+                <span>Download High Resolution</span>
+              </a>
+            </div>
           </div>
         ) : (
           <div className="p-10 text-center">

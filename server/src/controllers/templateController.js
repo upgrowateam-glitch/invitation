@@ -4,6 +4,19 @@ const path = require('path');
 const fs = require('fs');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const crypto = require('crypto');
+const sharp = require('sharp');
+
+const getImageDimensions = async (filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      const meta = await sharp(filePath).metadata();
+      return { width: meta.width || null, height: meta.height || null };
+    }
+  } catch (err) {
+    console.warn(`Could not read image metadata for ${filePath}:`, err.message);
+  }
+  return { width: null, height: null };
+};
 
 const getTemplates = async (req, res) => {
   try {
@@ -13,8 +26,10 @@ const getTemplates = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const sanitizedTemplates = templates.map(t => {
+    const sanitizedTemplates = await Promise.all(templates.map(async (t) => {
       let imagePath = t.originalFilePath;
+      let thumbPath = t.thumbnailPath || t.originalFilePath;
+
       if (imagePath && imagePath.endsWith('.pdf')) {
         const pngPath = imagePath.replace('.pdf', '.png');
         const candidates = [
@@ -25,17 +40,29 @@ const getTemplates = async (req, res) => {
         ];
         if (candidates.some(p => fs.existsSync(p))) {
           imagePath = pngPath;
+          thumbPath = pngPath;
         }
       }
+
+      // Determine dimensions for image templates
+      let dimensions = { width: null, height: null };
+      if (t.fileType !== 'PDF' && imagePath) {
+        const absPath = path.join(__dirname, '../../..', imagePath);
+        dimensions = await getImageDimensions(absPath);
+      }
+
       return {
         ...t,
         originalFilePath: imagePath,
-        thumbnailPath: imagePath
+        thumbnailPath: thumbPath,
+        width: dimensions.width,
+        height: dimensions.height
       };
-    });
+    }));
 
     res.json(sanitizedTemplates);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error fetching templates' });
   }
 };
@@ -51,6 +78,27 @@ const createTemplate = async (req, res) => {
     if (req.file.mimetype === 'image/jpeg') fileType = 'JPG';
     if (req.file.mimetype === 'image/png') fileType = 'PNG';
     
+    const originalRelPath = `/uploads/templates/${req.file.filename}`;
+    let thumbRelPath = originalRelPath;
+
+    // If uploading an image (PNG or JPG), generate a distinct smaller thumbnail for Template Gallery
+    if (fileType !== 'PDF') {
+      try {
+        const thumbFilename = `thumb-${req.file.filename}`;
+        const absOriginalPath = req.file.path;
+        const absThumbPath = path.join(path.dirname(absOriginalPath), thumbFilename);
+
+        // Generate high quality 400px aspect-ratio fitting thumbnail
+        await sharp(absOriginalPath)
+          .resize({ width: 400, withoutEnlargement: true })
+          .toFile(absThumbPath);
+
+        thumbRelPath = `/uploads/templates/${thumbFilename}`;
+      } catch (sharpErr) {
+        console.warn('Failed to generate thumbnail via sharp, falling back to original file:', sharpErr.message);
+      }
+    }
+    
     const template = await prisma.template.create({
       data: {
         name,
@@ -58,13 +106,24 @@ const createTemplate = async (req, res) => {
         category: category || 'General Invitation',
         sourceType: 'UPLOAD',
         fileType,
-        originalFilePath: `/uploads/templates/${req.file.filename}`,
-        thumbnailPath: `/uploads/templates/${req.file.filename}`,
-        createdBy: req.user.id
+        originalFilePath: originalRelPath,
+        thumbnailPath: thumbRelPath,
+        createdBy: req.user?.id || null
       },
       include: { defaultConfig: true }
     });
-    res.status(201).json(template);
+
+    // Read resolution metadata
+    let dimensions = { width: null, height: null };
+    if (fileType !== 'PDF') {
+      dimensions = await getImageDimensions(req.file.path);
+    }
+
+    res.status(201).json({
+      ...template,
+      width: dimensions.width,
+      height: dimensions.height
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error creating template' });

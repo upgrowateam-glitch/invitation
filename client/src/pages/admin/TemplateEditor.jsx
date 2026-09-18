@@ -15,14 +15,14 @@ const TemplateEditor = () => {
   // Field config state (Design Configuration)
   const [designConfig, setDesignConfig] = useState({
     pageNumber: 1,
-    xPosition: 0.5,
-    yPosition: 0.5,
+    xPosition: 0.1,
+    yPosition: 0.565,
     textBoxWidth: 0.8,
-    fontFamily: 'Helvetica',
-    fontSize: 48,
+    fontFamily: '"Clicker Script", cursive',
+    fontSize: 20,
     textAlign: 'center',
     fontColour: '#000000',
-    fontWeight: 'bold'
+    fontWeight: 'normal'
   });
   
   const [receiverName, setReceiverName] = useState('');
@@ -287,9 +287,17 @@ const TemplateEditor = () => {
                 />
               ) : (
                 <img 
-                  src={template.originalFilePath} 
+                  src={(() => {
+                    let url = template.originalFilePath || "";
+                    if (url.startsWith('http') || url.startsWith('data:')) return url;
+                    if (!url.startsWith('/')) url = '/' + url;
+                    const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
+                      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
+                      : (typeof window !== "undefined" ? window.location.origin : "");
+                    return `${origin}${url}`;
+                  })()} 
                   alt={template.name}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain pointer-events-none"
                 />
               )}
             </div>
@@ -315,6 +323,20 @@ const TemplateEditor = () => {
                     placeholder="Enter name"
                   />
                   {warning && <p className="text-[10px] text-yellow-600 mt-1 flex items-start"><AlertCircle size={12} className="mr-1 mt-0.5 shrink-0"/> {warning}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Font Family</label>
+                  <select 
+                    value={designConfig.fontFamily}
+                    onChange={e => setDesignConfig({...designConfig, fontFamily: e.target.value})}
+                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                  >
+                    <option value='"Clicker Script", cursive'>Clicker Script</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

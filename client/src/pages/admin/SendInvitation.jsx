@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { storageService } from "../../services/storageService";
 import { pdfService } from "../../services/pdfService";
 import { isMobileDevice, openWhatsAppMessage } from "../../utils/whatsappUtils";
+import { renderHighDpiInvitation } from "../../utils/imageUtils";
 import { Minus, Plus, X, CheckCircle, Copy, Search, ChevronDown, Check } from "lucide-react";
 
 const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
@@ -204,10 +205,32 @@ const SendInvitation = () => {
     try {
       let base64Image = null;
       let ogBase64Image = null;
-      if (previewRef.current) {
-        // Capture the raw tight preview
-        const rawCanvas = await html2canvas(previewRef.current, { useCORS: true, allowTaint: true });
-        base64Image = rawCanvas.toDataURL("image/jpeg", 0.85); // High quality for actual viewing
+
+      let templateUrl = formData.templateUrl || "";
+      const isPdfTemplate = templateUrl.endsWith(".pdf");
+
+      if (!isPdfTemplate && templateUrl) {
+        // Direct image template: Render at 1:1 High-DPI source resolution
+        if (!templateUrl.startsWith("http") && !templateUrl.startsWith("data:")) {
+          if (!templateUrl.startsWith("/")) templateUrl = "/" + templateUrl;
+          const origin = import.meta.env.VITE_API_URL?.startsWith("http") 
+            ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") 
+            : (typeof window !== "undefined" ? window.location.origin : "");
+          templateUrl = `${origin}${templateUrl}`;
+        }
+
+        const highResResult = await renderHighDpiInvitation({
+          imageUrl: templateUrl,
+          receiverName: formData.receiverName.trim(),
+          designConfig: formData.designConfiguration
+        });
+
+        base64Image = highResResult.base64Image;
+        ogBase64Image = highResResult.ogBase64Image;
+      } else if (previewRef.current) {
+        // Capture PDF or fallback with scale 2 for high DPI
+        const rawCanvas = await html2canvas(previewRef.current, { useCORS: true, allowTaint: true, scale: 2 });
+        base64Image = rawCanvas.toDataURL("image/png");
         
         // Create 1200x630 Open Graph canvas
         const ogCanvas = document.createElement("canvas");
@@ -230,9 +253,7 @@ const SendInvitation = () => {
         const dy = padding;
         
         ctx.drawImage(rawCanvas, dx, dy, targetWidth, targetHeight);
-        
-        // Compress to keep under 1MB
-        ogBase64Image = ogCanvas.toDataURL("image/jpeg", 0.75);
+        ogBase64Image = ogCanvas.toDataURL("image/jpeg", 0.85);
       }
 
       const payload = {
