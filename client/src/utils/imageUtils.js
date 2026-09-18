@@ -152,7 +152,12 @@ export const renderHighDpiInvitation = async ({ imageUrl, receiverName, designCo
   // Compute exact text alignment position
   let drawX = startX;
   if (alignment === "center") {
-    drawX = startX + boxWidthPx / 2;
+    // Standard box center or dead center of canvas
+    if (xPercent >= 0.4 || startX + boxWidthPx / 2 > nativeWidth) {
+      drawX = nativeWidth / 2;
+    } else {
+      drawX = startX + boxWidthPx / 2;
+    }
     ctx.textAlign = "center";
   } else if (alignment === "right") {
     drawX = startX + boxWidthPx;
