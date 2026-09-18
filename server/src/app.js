@@ -47,13 +47,31 @@ app.use(morgan('dev'));
 const os = require('os');
 
 // Static uploads - search all candidate locations
-const uploadCandidates = [
-  path.join(__dirname, '../../uploads'),
-  path.join(process.cwd(), 'uploads'),
-  path.join(process.cwd(), 'server/uploads'),
-  path.join(__dirname, '../../client/dist/uploads'),
-  path.join(os.tmpdir(), 'uploads')
-];
+// Handle missing template image files gracefully with default fallback to avoid 404s
+app.get('/uploads/templates/:filename', (req, res, next) => {
+  const filename = req.params.filename;
+  const candidatePaths = [
+    path.join(__dirname, '../../uploads/templates', filename),
+    path.join(process.cwd(), 'uploads/templates', filename),
+    path.join(process.cwd(), 'server/uploads/templates', filename),
+    path.join(__dirname, '../../client/dist/uploads/templates', filename)
+  ];
+
+  if (candidatePaths.some(p => fs.existsSync(p))) {
+    return next();
+  }
+
+  const defaultFallback = [
+    path.join(__dirname, '../../uploads/templates/bni-template.png'),
+    path.join(process.cwd(), 'uploads/templates/bni-template.png'),
+    path.join(process.cwd(), 'server/uploads/templates/bni-template.png')
+  ].find(p => fs.existsSync(p));
+
+  if (defaultFallback) {
+    return res.sendFile(defaultFallback);
+  }
+  next();
+});
 
 uploadCandidates.forEach(dir => {
   if (fs.existsSync(dir)) {

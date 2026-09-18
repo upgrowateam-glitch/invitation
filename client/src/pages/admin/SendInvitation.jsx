@@ -219,15 +219,23 @@ const SendInvitation = () => {
           templateUrl = `${origin}${templateUrl}`;
         }
 
-        const highResResult = await renderHighDpiInvitation({
-          imageUrl: templateUrl,
-          receiverName: formData.receiverName.trim(),
-          designConfig: formData.designConfiguration
-        });
+        try {
+          const highResResult = await renderHighDpiInvitation({
+            imageUrl: templateUrl,
+            receiverName: formData.receiverName.trim(),
+            designConfig: formData.designConfiguration
+          });
 
-        base64Image = highResResult.base64Image;
-        ogBase64Image = highResResult.ogBase64Image;
-      } else if (previewRef.current) {
+          if (highResResult) {
+            base64Image = highResResult.base64Image;
+            ogBase64Image = highResResult.ogBase64Image;
+          }
+        } catch (err) {
+          console.warn("High-DPI rendering failed, falling back to DOM canvas:", err);
+        }
+      }
+
+      if (!base64Image && previewRef.current) {
         // Capture PDF or fallback with scale 2 for high DPI
         const rawCanvas = await html2canvas(previewRef.current, { useCORS: true, allowTaint: true, scale: 2 });
         base64Image = rawCanvas.toDataURL("image/png");
