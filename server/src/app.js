@@ -47,6 +47,14 @@ app.use(morgan('dev'));
 const os = require('os');
 
 // Static uploads - search all candidate locations
+const uploadCandidates = [
+  path.join(__dirname, '../../uploads'),
+  path.join(process.cwd(), 'uploads'),
+  path.join(process.cwd(), 'server/uploads'),
+  path.join(__dirname, '../../client/dist/uploads'),
+  path.join(os.tmpdir(), 'uploads')
+];
+
 // Handle missing template image files gracefully with default fallback to avoid 404s
 app.get('/uploads/templates/:filename', (req, res, next) => {
   const filename = req.params.filename;
