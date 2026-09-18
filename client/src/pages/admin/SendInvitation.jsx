@@ -4,6 +4,7 @@ import axios from "axios";
 import html2canvas from "html2canvas";
 import { storageService } from "../../services/storageService";
 import { pdfService } from "../../services/pdfService";
+import { isMobileDevice, openWhatsAppMessage } from "../../utils/whatsappUtils";
 import { Minus, Plus, X, CheckCircle, Copy, Search, ChevronDown, Check } from "lucide-react";
 
 const WhatsAppIcon = ({ size = 24, color = "currentColor" }) => (
@@ -292,14 +293,31 @@ const SendInvitation = () => {
   };
 
   const handleWhatsAppSend = async (e) => {
-    const link = await handleSend(e);
-    if (link) {
-      const freshLink = `${link}?t=${Date.now()}`;
-      const safeReceiver = formData.receiverName.trim();
-      const safeSender = formData.senderName.trim();
-      
-      const message = `Hi ${safeReceiver},\n\n${safeSender} has invited you to a special event.\n\nView your invitation and respond:\n${freshLink}`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");
+    let desktopWin = null;
+    if (!isMobileDevice()) {
+      // Pre-open window synchronously to prevent desktop popup blockers during async operations
+      desktopWin = window.open("about:blank", "_blank");
+    }
+
+    try {
+      const link = await handleSend(e);
+      if (link) {
+        const freshLink = `${link}?t=${Date.now()}`;
+        const safeReceiver = formData.receiverName.trim();
+        const safeSender = formData.senderName.trim();
+        
+        const message = `Hi ${safeReceiver},\n\n${safeSender} has invited you to a special event.\n\nView your invitation and respond:\n${freshLink}`;
+        openWhatsAppMessage(message, desktopWin);
+      } else {
+        if (desktopWin && !desktopWin.closed) {
+          desktopWin.close();
+        }
+      }
+    } catch (err) {
+      if (desktopWin && !desktopWin.closed) {
+        desktopWin.close();
+      }
+      console.error(err);
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { io } from 'socket.io-client';
 import { recipientService } from '../../services/recipientService';
+import { openWhatsAppMessage } from '../../utils/whatsappUtils';
 import { ChevronDown, ChevronRight, Search, Download, ExternalLink, RefreshCw } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL?.replace('/api','') || '';
@@ -46,6 +47,11 @@ const RecipientsList = () => {
   const handleSimulateSend = async (id) => {
     await recipientService.simulateSend(id);
     await fetchData();
+  };
+
+  const handleWhatsAppShare = (r) => {
+    const message = `Hi ${r.name},\n\n${r.senderName} has invited you to a special event.\n\nView your invitation and respond:\n${window.location.origin}/invitation/${r.token}`;
+    openWhatsAppMessage(message);
   };
 
   const handleExportExcel = () => {
@@ -295,14 +301,12 @@ const RecipientsList = () => {
                                 >
                                   <span>Copy</span>
                                 </button>
-                                <a 
-                                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hi ${r.name},\n\n${r.senderName} has invited you to a special event.\n\nView your invitation and respond:\n${window.location.origin}/invitation/${r.token}`)}`}
-                                  target="_blank"
-                                  rel="noreferrer"
+                                <button 
+                                  onClick={() => handleWhatsAppShare(r)}
                                   className="inline-flex items-center space-x-1.5 px-3 py-1.5 border border-[#25D366]/30 bg-[#25D366]/10 text-[#128C7E] rounded-lg hover:bg-[#25D366]/20 transition-all font-bold text-xs shadow-sm"
                                 >
                                   WhatsApp
-                                </a>
+                                </button>
                                 <a 
                                   href={`${window.location.origin}/invitation/${r.token}`}
                                   target="_blank"
@@ -341,14 +345,12 @@ const RecipientsList = () => {
                             >
                               Copy
                             </button>
-                            <a 
-                              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hi ${r.name},\n\n${r.senderName} has invited you to a special event.\n\nView your invitation and respond:\n${window.location.origin}/invitation/${r.token}`)}`}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button 
+                              onClick={() => handleWhatsAppShare(r)}
                               className="flex-1 flex justify-center items-center py-2 border border-[#25D366]/30 shadow-sm rounded-lg text-sm text-[#128C7E] bg-[#25D366]/10 hover:bg-[#25D366]/20 font-bold transition-colors"
                             >
                               WhatsApp
-                            </a>
+                            </button>
                             <a 
                               href={`${window.location.origin}/invitation/${r.token}`}
                               target="_blank"
