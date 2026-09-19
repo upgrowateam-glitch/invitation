@@ -126,14 +126,14 @@ app.get('/uploads/social/:filename', async (req, res, next) => {
     }
 
     if (!sourceBuffer) {
-      const templateFallbacks = [
-        path.join(__dirname, '../../uploads/templates/bni-template.png'),
-        path.join(process.cwd(), 'uploads/templates/bni-template.png'),
-        path.join(process.cwd(), 'server/uploads/templates/bni-template.png')
-      ];
-      const foundTf = templateFallbacks.find(p => fs.existsSync(p));
-      if (foundTf) {
-        sourceBuffer = fs.readFileSync(foundTf);
+      try {
+        const { resolveTemplateAndConfig } = require('./utils/imageGenerator');
+        const activeTpl = await resolveTemplateAndConfig(recipient?.templateId);
+        if (activeTpl && activeTpl.templateFilePath) {
+          sourceBuffer = fs.readFileSync(activeTpl.templateFilePath);
+        }
+      } catch (tfErr) {
+        console.warn('Dynamic template fallback search error:', tfErr.message);
       }
     }
 

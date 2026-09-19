@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-09-19T03:14:26.594Z",
+  "backupFile": "D:\\upgrowa-workspace\\invitation-management-system\\server\\backups\\db_backup_2026-09-19T03-14-26-547Z.json",
+  "records": [
+    {
+      "id": 1,
+      "token": "a5f7eccf9b749f2bf5f27bfeca4fc4c990b92848da93a5baea4d7907d8ed2270",
+      "oldPath": "/uploads/generated/invite-6980ff05191d90b2226c746830d01d94.pdf",
+      "newPath": "/uploads/generated/invite-a5f7eccf9b749f2bf5f27bfeca4fc4c990b92848da93a5baea4d7907d8ed2270.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    }
+  ]
+}

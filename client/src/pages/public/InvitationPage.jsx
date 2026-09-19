@@ -76,7 +76,7 @@ const InvitationPage = () => {
             <div className="w-full bg-slate-900/90 text-white py-2 px-4 flex items-center justify-between text-xs">
               <span className="font-medium text-slate-300">Full-HD Personalized Invitation</span>
               <a 
-                href={imageUrl} 
+                href={(import.meta.env.VITE_API_URL || "/api") + `/public/invitation/${token}/download`} 
                 target="_blank" 
                 rel="noreferrer" 
                 download={`invitation-${recipient.name.replace(/\s+/g, '_')}.png`}
