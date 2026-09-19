@@ -131,12 +131,13 @@ export const renderHighDpiInvitation = async ({ imageUrl, receiverName, designCo
     const startY = yPercent * nativeHeight;
     const boxWidthPx = boxWidthPercent * nativeWidth;
 
-    // Ensure web fonts (e.g. Clicker Script) are ready before rendering on Canvas
+    // Ensure Clicker Script font is loaded before rendering on browser Canvas
     if (typeof document !== "undefined" && document.fonts) {
       try {
+        await document.fonts.load('400 20px "Clicker Script"');
         await document.fonts.ready;
       } catch (e) {
-        // fallback if font ready promise fails
+        // fallback if font load fails
       }
     }
 

@@ -1,0 +1,318 @@
+{
+  "timestamp": "2026-09-19T03:27:16.324Z",
+  "backupFile": "D:\\upgrowa-workspace\\invitation-management-system\\server\\backups\\db_backup_2026-09-19T03-27-16-288Z.json",
+  "records": [
+    {
+      "id": 3,
+      "token": "32e3fefaeb9046ec896b59c1d0b88f8a34ea3564d56b8c7709c74e832a550b3e",
+      "oldPath": "/uploads/generated/invite-a1ced6249abfa16af404291d968d51a6.png",
+      "newPath": "/uploads/generated/invite-32e3fefaeb9046ec896b59c1d0b88f8a34ea3564d56b8c7709c74e832a550b3e.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 1,
+      "token": "a5f7eccf9b749f2bf5f27bfeca4fc4c990b92848da93a5baea4d7907d8ed2270",
+      "oldPath": "/uploads/generated/invite-a5f7eccf9b749f2bf5f27bfeca4fc4c990b92848da93a5baea4d7907d8ed2270.png",
+      "newPath": "/uploads/generated/invite-a5f7eccf9b749f2bf5f27bfeca4fc4c990b92848da93a5baea4d7907d8ed2270.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 2,
+      "token": "6e97a93795cf215f424691b3284a17967eaf74a47492232e09d04276ca38d785",
+      "oldPath": "/uploads/generated/invite-67e8ffbfe5a380d8fff48fa99df6dee7.pdf",
+      "newPath": "/uploads/generated/invite-6e97a93795cf215f424691b3284a17967eaf74a47492232e09d04276ca38d785.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 4,
+      "token": "06f53c2a9bce191e60d6e47232a693b9b409dec6edc93098c2f5162afb229e07",
+      "oldPath": "/uploads/generated/invite-5029d7921c6f68576e20c825684f113d.png",
+      "newPath": "/uploads/generated/invite-06f53c2a9bce191e60d6e47232a693b9b409dec6edc93098c2f5162afb229e07.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 5,
+      "token": "0fbb21148d6f7bbd1141fa52c5551cd052287b95f77e62dec6fb388acdabedc8",
+      "oldPath": "/uploads/generated/invite-c1b59f9d4301aea26cb8d0bf09f70b05.png",
+      "newPath": "/uploads/generated/invite-0fbb21148d6f7bbd1141fa52c5551cd052287b95f77e62dec6fb388acdabedc8.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 6,
+      "token": "2028180562d7bbef8079f0a62fe3361d5a96397e00c92c8564ffe4963d81e8c0",
+      "oldPath": "/uploads/generated/invite-1db3e4a0ff3c8780e5529bd694641349.png",
+      "newPath": "/uploads/generated/invite-2028180562d7bbef8079f0a62fe3361d5a96397e00c92c8564ffe4963d81e8c0.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 8,
+      "token": "84c7428dff2fb32b84d95a7b08ba71a9cb4167a98050d54debb7de2fdd0e39fd",
+      "oldPath": "/uploads/generated/invite-df5c451899043f0c11ddb6c67e0aceda.png",
+      "newPath": "/uploads/generated/invite-84c7428dff2fb32b84d95a7b08ba71a9cb4167a98050d54debb7de2fdd0e39fd.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 9,
+      "token": "2877b03e6f67d6172dc0b58a42549f53018be370fc7f2809f99839f96d5d4447",
+      "oldPath": "/uploads/generated/invite-21818b23019354b141ed9763134ee497.png",
+      "newPath": "/uploads/generated/invite-2877b03e6f67d6172dc0b58a42549f53018be370fc7f2809f99839f96d5d4447.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 7,
+      "token": "b7ac50b1f30f38fa50511351b3560b89602525af22c3b1a08584e81e875e8ae8",
+      "oldPath": "/uploads/generated/invite-65963cbeba987eb441f51f7ad93c03b7.png",
+      "newPath": "/uploads/generated/invite-b7ac50b1f30f38fa50511351b3560b89602525af22c3b1a08584e81e875e8ae8.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 10,
+      "token": "c4d91049f2ab95bbe683e1949615fc837c7481236246fa4a25bd82fee111fda5",
+      "oldPath": "/uploads/generated/invite-64ae801c004c8a218a5b0935f5eb404e.png",
+      "newPath": "/uploads/generated/invite-c4d91049f2ab95bbe683e1949615fc837c7481236246fa4a25bd82fee111fda5.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 11,
+      "token": "9b41544b166a8e8897d97944153d030cc90f903d858e676af91056c8879e80e9",
+      "oldPath": "/uploads/generated/invite-6718d4d14257683eff914be700da3504.png",
+      "newPath": "/uploads/generated/invite-9b41544b166a8e8897d97944153d030cc90f903d858e676af91056c8879e80e9.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 14,
+      "token": "b3e642b675427ed9ac4a18e9e9077fadcfe6e95cf404cd4edfe2e8374e268ddd",
+      "oldPath": "/uploads/generated/invite-16a8963ba3746a5a9b4dccdb45c0176b.png",
+      "newPath": "/uploads/generated/invite-b3e642b675427ed9ac4a18e9e9077fadcfe6e95cf404cd4edfe2e8374e268ddd.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 13,
+      "token": "1f1ee0bab1db8c58e3cbf7f8701c5a7239fc6817ade6c2b9a7c8270ea5842fca",
+      "oldPath": "/uploads/generated/invite-82e6c706c36b33148f172e01aa3cc2ea.png",
+      "newPath": "/uploads/generated/invite-1f1ee0bab1db8c58e3cbf7f8701c5a7239fc6817ade6c2b9a7c8270ea5842fca.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 12,
+      "token": "6d3c955aa62a0bbd863f9776c62af56adb9da988003abd8e877c85ad9ac89255",
+      "oldPath": "/uploads/generated/invite-1fd723a7a863e9be844f03ad4094afb4.png",
+      "newPath": "/uploads/generated/invite-6d3c955aa62a0bbd863f9776c62af56adb9da988003abd8e877c85ad9ac89255.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 15,
+      "token": "4e0866b7736bb969df3dbf1885a1b4f84c1350d404af4ef9ff733ae9290ca42a",
+      "oldPath": "/uploads/generated/invite-778297a354b753d58f9eb489a9fa4000.png",
+      "newPath": "/uploads/generated/invite-4e0866b7736bb969df3dbf1885a1b4f84c1350d404af4ef9ff733ae9290ca42a.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 16,
+      "token": "15396e3bfdefd0f23d4cd12745b79f90e69ffa80e703b60e7198817b1c21eb75",
+      "oldPath": "/uploads/generated/invite-af6e57607af78801633d51dfd3040839.png",
+      "newPath": "/uploads/generated/invite-15396e3bfdefd0f23d4cd12745b79f90e69ffa80e703b60e7198817b1c21eb75.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 18,
+      "token": "47c5f067d8a1091010de64d80ec5e9ec105bec9d71fce87c176f650319127cb9",
+      "oldPath": "/uploads/generated/invite-df47cd3ff2b21e947f5919850d9703f3.png",
+      "newPath": "/uploads/generated/invite-47c5f067d8a1091010de64d80ec5e9ec105bec9d71fce87c176f650319127cb9.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 17,
+      "token": "7464e7302c1bc7341ca1162a6c7516d9704b143a543e529ddf9f1a9f51448593",
+      "oldPath": "/uploads/generated/invite-6a8082829069eaa7ae9f5b1214dae16d.png",
+      "newPath": "/uploads/generated/invite-7464e7302c1bc7341ca1162a6c7516d9704b143a543e529ddf9f1a9f51448593.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 19,
+      "token": "059f7516d411896779287dae491012058c0e61397db5b917d52330ba65290e42",
+      "oldPath": "/uploads/generated/invite-372ba2d6deea8541288917463b5ddcc3.png",
+      "newPath": "/uploads/generated/invite-059f7516d411896779287dae491012058c0e61397db5b917d52330ba65290e42.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 20,
+      "token": "43399ae6607b95cb05793cd6d9b5bcc5a777b320b046af7666b4b535896e913f",
+      "oldPath": "/uploads/generated/invite-245204a062aafd7cae4c55324c6f63ed.png",
+      "newPath": "/uploads/generated/invite-43399ae6607b95cb05793cd6d9b5bcc5a777b320b046af7666b4b535896e913f.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 22,
+      "token": "3a44fccf393ccfd550871ac9fbd1724ae131aeab66e6817bcc8ef410139a9407",
+      "oldPath": "/uploads/generated/invite-81d3e33396e8e39473defd8893f4c39c.png",
+      "newPath": "/uploads/generated/invite-3a44fccf393ccfd550871ac9fbd1724ae131aeab66e6817bcc8ef410139a9407.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 23,
+      "token": "172d9d8b30b84328dacb1beb544d80a8f26da1cc324710e79ebaba0cd0d328f3",
+      "oldPath": "/uploads/generated/invite-f4dcc4c34ea4c467c712c9d8580c94bc.png",
+      "newPath": "/uploads/generated/invite-172d9d8b30b84328dacb1beb544d80a8f26da1cc324710e79ebaba0cd0d328f3.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 21,
+      "token": "4adb7a732cdad99d7bcbb9c98ff9dcc6b73747b5439e70a8990411dbdd474aa8",
+      "oldPath": "/uploads/generated/invite-b793938d97867814a672e691ed387b6d.png",
+      "newPath": "/uploads/generated/invite-4adb7a732cdad99d7bcbb9c98ff9dcc6b73747b5439e70a8990411dbdd474aa8.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 24,
+      "token": "aec8fe41cd9c3c7415df591e9ef55054ea25dd62a6c94edb71f8af9614c5db4c",
+      "oldPath": "/uploads/generated/invite-5137c6710925eddb2d7fdb7c76bd464c.png",
+      "newPath": "/uploads/generated/invite-aec8fe41cd9c3c7415df591e9ef55054ea25dd62a6c94edb71f8af9614c5db4c.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 25,
+      "token": "8369a61d61744a3833816cfea8c0c0c3a12eac1f53285eb77d2abea2eb3667af",
+      "oldPath": "/uploads/generated/invite-9695b74bbbb7b4e6e73343b9a124fb4c.png",
+      "newPath": "/uploads/generated/invite-8369a61d61744a3833816cfea8c0c0c3a12eac1f53285eb77d2abea2eb3667af.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 26,
+      "token": "82b67f094fe52c4f156e3e9776b8d0cb06641c9de17523d2f54479afca52e948",
+      "oldPath": "/uploads/generated/invite-dafd74f787b59c0ebbbcd6b5365ffae7.png",
+      "newPath": "/uploads/generated/invite-82b67f094fe52c4f156e3e9776b8d0cb06641c9de17523d2f54479afca52e948.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 29,
+      "token": "3e8cbc9ef6b04ec85836c4de70edeee78d71075cda38432213000f42ee24ec92",
+      "oldPath": "/uploads/generated/invite-a1be9f0fb5b60a51fa083d92feff8d9d.png",
+      "newPath": "/uploads/generated/invite-3e8cbc9ef6b04ec85836c4de70edeee78d71075cda38432213000f42ee24ec92.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 28,
+      "token": "7653ac373318e4e0d1dfdb88c387b776bebe092bc01b81f6eca1f10775ce86ea",
+      "oldPath": "/uploads/generated/invite-3999f72535fc5329ce6d27048a473326.png",
+      "newPath": "/uploads/generated/invite-7653ac373318e4e0d1dfdb88c387b776bebe092bc01b81f6eca1f10775ce86ea.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 27,
+      "token": "85e1c2837fe463a0163cf1e7cf36143b408f31458eab7ae289412799c0f74172",
+      "oldPath": "/uploads/generated/invite-ba902298f5d7ce9af792ed6c29435063.png",
+      "newPath": "/uploads/generated/invite-85e1c2837fe463a0163cf1e7cf36143b408f31458eab7ae289412799c0f74172.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 30,
+      "token": "96f8ba1310deeeff036aa8a4bd11952b0acedd86948a94530de6a5ca7229cc0b",
+      "oldPath": "/uploads/generated/invite-33365cf2d1e4b231b9086f045124d0ec.jpg",
+      "newPath": "/uploads/generated/invite-96f8ba1310deeeff036aa8a4bd11952b0acedd86948a94530de6a5ca7229cc0b.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 32,
+      "token": "5afc9fbbc4479378c78137f69e3ca3517ad65137244e4a8bb503e5409ad493fe",
+      "oldPath": "/uploads/generated/invite-d3ffdff071f0e733b8289717f0f01c86.jpg",
+      "newPath": "/uploads/generated/invite-5afc9fbbc4479378c78137f69e3ca3517ad65137244e4a8bb503e5409ad493fe.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 33,
+      "token": "9cfeffb394afb7705dc2aacde782e1ffb0e5fef46a5a19edb86e5baed5f4491e",
+      "oldPath": "/uploads/generated/invite-429f539ba02d6bd477caa54608ab3dc7.jpg",
+      "newPath": "/uploads/generated/invite-9cfeffb394afb7705dc2aacde782e1ffb0e5fef46a5a19edb86e5baed5f4491e.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 35,
+      "token": "af7223f95e8f3983d421720c3576ac3db35c8e5b876252487bda6448694f2100",
+      "oldPath": "/uploads/generated/invite-6e2d8a08c1faa4d1ce441203c752cbca.jpg",
+      "newPath": "/uploads/generated/invite-af7223f95e8f3983d421720c3576ac3db35c8e5b876252487bda6448694f2100.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 34,
+      "token": "c97e68f05f5feecbf9bc35fc97a0f1eaa970bd9dacba0a730a3e9fe7cde674d7",
+      "oldPath": "/uploads/generated/invite-41e62783a73a53427d64eb7c14d41645.jpg",
+      "newPath": "/uploads/generated/invite-c97e68f05f5feecbf9bc35fc97a0f1eaa970bd9dacba0a730a3e9fe7cde674d7.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 36,
+      "token": "7603d7bfeeecf2c28e25f1602a94d08b25365b1f40dd40057e24628e1bdc3d59",
+      "oldPath": "/uploads/generated/invite-50ef0899d5d957d5735347f95a5f0ffd.jpg",
+      "newPath": "/uploads/generated/invite-7603d7bfeeecf2c28e25f1602a94d08b25365b1f40dd40057e24628e1bdc3d59.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 37,
+      "token": "fffb0e3015f307930707be3cfc1fcdc6db45bb3d626040ffd387daa20ccb4a0b",
+      "oldPath": "/uploads/generated/invite-a07177cc99df1dd3eb23dd3ffd3033a8.jpg",
+      "newPath": "/uploads/generated/invite-fffb0e3015f307930707be3cfc1fcdc6db45bb3d626040ffd387daa20ccb4a0b.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 38,
+      "token": "e07ad5881abc9d38113206aea532726d7ec4cb42723e64cca2bbf8d5cc1d8991",
+      "oldPath": "/uploads/generated/invite-21bad82107553b83ddaaaaf263408674.jpg",
+      "newPath": "/uploads/generated/invite-e07ad5881abc9d38113206aea532726d7ec4cb42723e64cca2bbf8d5cc1d8991.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 40,
+      "token": "6baa8a195b53547c1cf722ee625d6849ee757cb1863ddbe18c39578221ac2af7",
+      "oldPath": "/uploads/generated/invite-86b419cef7ca439769d842cd7836608c.jpg",
+      "newPath": "/uploads/generated/invite-6baa8a195b53547c1cf722ee625d6849ee757cb1863ddbe18c39578221ac2af7.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    },
+    {
+      "id": 39,
+      "token": "aa684ff8e55e398129dbd8bdb89abd80c19e465f228f9a1b8185fde1319a2fbd",
+      "oldPath": "/uploads/generated/invite-9a19042edc8164eb1a2e03d8f7bfa3d3.jpg",
+      "newPath": "/uploads/generated/invite-aa684ff8e55e398129dbd8bdb89abd80c19e465f228f9a1b8185fde1319a2fbd.png",
+      "oldTemplateId": 1,
+      "newTemplateId": 1
+    }
+  ]
+}

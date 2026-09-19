@@ -2,9 +2,28 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const sharp = require('sharp');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+
+// Startup validation: Locate and register bundled ClickerScript-Regular.ttf font
+const fontPath = [
+  path.join(__dirname, '../../assets/fonts/ClickerScript-Regular.ttf'),
+  path.join(process.cwd(), 'assets/fonts/ClickerScript-Regular.ttf'),
+  path.join(process.cwd(), 'server/assets/fonts/ClickerScript-Regular.ttf'),
+  path.join(__dirname, '../../..', 'client/src/assets/fonts/ClickerScript-Regular.ttf')
+].find(p => fs.existsSync(p));
+
+if (!fontPath) {
+  throw new Error('[FATAL ERROR] ClickerScript-Regular.ttf font file not found! Server cannot generate invitations without bundled font.');
+}
+
+const fontRegistered = GlobalFonts.registerFromPath(fontPath, 'Clicker Script');
+if (!fontRegistered) {
+  throw new Error(`[FATAL ERROR] Failed to register bundled font from ${fontPath}`);
+}
+console.log(`[FONT LOADED SUCCESS] Clicker Script registered from: ${fontPath}`);
 
 // Candidate upload directories for persistence across restarts
 const getUploadCandidates = () => {
@@ -56,7 +75,6 @@ const resolveTemplateAndConfig = async (templateId) => {
   }
 
   if (!template || !template.isActive || template.isArchived) {
-    // Dynamic query for current active template in database
     template = await prisma.template.findFirst({
       where: { isActive: true, isArchived: false },
       include: { defaultConfig: true },
@@ -73,7 +91,6 @@ const resolveTemplateAndConfig = async (templateId) => {
 
   let templateFilePath = resolveTemplateFile(template.originalFilePath);
   
-  // If original file is PDF or missing, check PNG version
   if (!templateFilePath || templateFilePath.endsWith('.pdf')) {
     const pngRelPath = (template.originalFilePath || '').replace(/\.pdf$/, '.png');
     const pngPath = resolveTemplateFile(pngRelPath);
@@ -83,7 +100,6 @@ const resolveTemplateAndConfig = async (templateId) => {
   }
 
   if (!templateFilePath) {
-    // Fallback search for default bni-template.png
     templateFilePath = resolveTemplateFile('/uploads/templates/bni-template.png');
   }
 
@@ -97,7 +113,7 @@ const resolveTemplateAndConfig = async (templateId) => {
         xPosition: 0.1,
         yPosition: 0.565,
         textBoxWidth: 0.8,
-        fontFamily: '"Clicker Script", cursive, Georgia, serif',
+        fontFamily: 'Clicker Script',
         fontSize: 20,
         fontWeight: 'normal',
         fontColour: '#000000',
@@ -112,18 +128,9 @@ const resolveTemplateAndConfig = async (templateId) => {
   };
 };
 
-const escapeXml = (str) => {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-};
-
 /**
  * Generate Full-HD invitation portrait image and 1200x630 Open Graph preview
+ * using authentic bundled Clicker Script TTF font rendering via Skia Canvas
  */
 const generateInvitationAssets = async ({
   recipientName,
@@ -134,20 +141,20 @@ const generateInvitationAssets = async ({
 }) => {
   const { template, templateFilePath, config, isFallback } = await resolveTemplateAndConfig(templateId);
 
-  // Parse design configuration override if provided
   let effectiveConfig = { ...config };
   if (designConfiguration) {
     try {
       const parsed = typeof designConfiguration === 'string' ? JSON.parse(designConfiguration) : designConfiguration;
       effectiveConfig = { ...effectiveConfig, ...parsed };
     } catch (e) {
-      // keep defaultConfig
+      // keep default config
     }
   }
 
-  const templateMeta = await sharp(templateFilePath).metadata();
-  let canvasWidth = templateMeta.width || 1080;
-  let canvasHeight = templateMeta.height || 1920;
+  // Read native dimensions of background template
+  const templateImage = await loadImage(templateFilePath);
+  let canvasWidth = templateImage.width || 1080;
+  let canvasHeight = templateImage.height || 1920;
 
   // Enforce minimum Full-HD resolution (1080x1920)
   if (canvasWidth < 1080 || canvasHeight < 1920) {
@@ -160,75 +167,88 @@ const generateInvitationAssets = async ({
     }
   }
 
-  // Compute text rendering parameters
-  const xPercent = effectiveConfig.xPosition ?? 0.1;
-  const yPercent = effectiveConfig.yPosition ?? 0.565;
-  const boxWidthPercent = effectiveConfig.textBoxWidth ?? 0.8;
+  // Create main portrait canvas
+  const canvas = createCanvas(canvasWidth, canvasHeight);
+  const ctx = canvas.getContext('2d');
 
-  const fontScaleFactor = canvasWidth / 600;
-  const fontSizePx = Math.round((effectiveConfig.fontSize || 20) * fontScaleFactor);
+  // Draw template background image 1:1
+  ctx.drawImage(templateImage, 0, 0, canvasWidth, canvasHeight);
 
-  const fontFamily = effectiveConfig.fontFamily || '"Clicker Script", cursive, Georgia, serif';
-  const fontWeight = effectiveConfig.fontWeight === 'bold' ? 'bold' : 'normal';
-  const fontColour = effectiveConfig.fontColour || '#000000';
-  const textAlignment = effectiveConfig.textAlignment || effectiveConfig.textAlign || 'center';
+  if (recipientName) {
+    const xPercent = effectiveConfig.xPosition ?? 0.1;
+    const yPercent = effectiveConfig.yPosition ?? 0.565;
+    const boxWidthPercent = effectiveConfig.textBoxWidth ?? 0.8;
 
-  let textAnchor = 'middle';
-  let drawX = Math.round(canvasWidth / 2);
-  const startY = Math.round(yPercent * canvasHeight);
+    const fontScaleFactor = canvasWidth / 600;
+    const baseFontSizePx = (effectiveConfig.fontSize || 20) * fontScaleFactor;
 
-  if (textAlignment === 'left') {
-    textAnchor = 'start';
-    drawX = Math.round(xPercent * canvasWidth);
-  } else if (textAlignment === 'right') {
-    textAnchor = 'end';
-    drawX = Math.round((xPercent + boxWidthPercent) * canvasWidth);
+    const fontColour = effectiveConfig.fontColour || '#000000';
+    const textAlignment = effectiveConfig.textAlignment || effectiveConfig.textAlign || 'center';
+
+    const startX = xPercent * canvasWidth;
+    const startY = yPercent * canvasHeight;
+    const boxWidthPx = boxWidthPercent * canvasWidth;
+
+    // Set canvas font specifically using bundled "Clicker Script"
+    let currentFontSize = baseFontSizePx;
+    ctx.font = `normal 400 ${currentFontSize}px "Clicker Script"`;
+
+    // Auto-scale font down if text width exceeds text box width
+    const minFontSizePx = 14 * fontScaleFactor;
+    let textWidth = ctx.measureText(recipientName).width;
+    while (textWidth > boxWidthPx && currentFontSize > minFontSizePx) {
+      currentFontSize -= 1 * fontScaleFactor;
+      ctx.font = `normal 400 ${currentFontSize}px "Clicker Script"`;
+      textWidth = ctx.measureText(recipientName).width;
+    }
+
+    // Determine alignment coordinates
+    let drawX = startX;
+    if (textAlignment === 'center') {
+      if (xPercent >= 0.4 || startX + boxWidthPx / 2 > canvasWidth) {
+        drawX = canvasWidth / 2;
+      } else {
+        drawX = startX + boxWidthPx / 2;
+      }
+      ctx.textAlign = 'center';
+    } else if (textAlignment === 'right') {
+      drawX = startX + boxWidthPx;
+      ctx.textAlign = 'right';
+    } else {
+      ctx.textAlign = 'left';
+    }
+
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = fontColour;
+
+    // Draw receiver name in authentic Clicker Script font
+    ctx.fillText(recipientName, drawX, startY);
   }
 
-  const safeName = escapeXml(recipientName || '');
+  const portraitBuffer = canvas.toBuffer('image/png');
 
-  // SVG text overlay layer
-  const svgOverlay = `
-    <svg width="${canvasWidth}" height="${canvasHeight}" xmlns="http://www.w3.org/2000/svg">
-      <style>
-        .receiver-name {
-          font-family: ${fontFamily};
-          font-size: ${fontSizePx}px;
-          font-weight: ${fontWeight};
-          fill: ${fontColour};
-          text-anchor: ${textAnchor};
-          dominant-baseline: middle;
-        }
-      </style>
-      <text x="${drawX}" y="${startY}" class="receiver-name">${safeName}</text>
-    </svg>
-  `;
+  // Generate 1200x630 WhatsApp Open Graph JPEG preview canvas
+  const ogCanvas = createCanvas(1200, 630);
+  const ogCtx = ogCanvas.getContext('2d');
 
-  // Render Full-HD portrait invitation PNG buffer
-  const portraitBuffer = await sharp(templateFilePath)
-    .resize(canvasWidth, canvasHeight, { fit: 'fill' })
-    .composite([{ input: Buffer.from(svgOverlay) }])
-    .png({ quality: 100, compressionLevel: 6 })
-    .toBuffer();
+  // Slate-50 background
+  ogCtx.fillStyle = '#F8FAFC';
+  ogCtx.fillRect(0, 0, 1200, 630);
 
-  // Render 1200x630 Open Graph JPEG preview buffer
-  const portraitResizedForOg = await sharp(portraitBuffer)
-    .resize({ height: 550, fit: 'inside' })
-    .toBuffer();
+  const padding = 40;
+  const targetHeight = 630 - padding * 2;
+  const scale = targetHeight / canvasHeight;
+  const targetWidth = canvasWidth * scale;
 
-  const ogBuffer = await sharp({
-    create: {
-      width: 1200,
-      height: 630,
-      channels: 3,
-      background: { r: 248, g: 250, b: 252 }
-    }
-  })
-  .composite([{ input: portraitResizedForOg, gravity: 'center' }])
-  .jpeg({ quality: 90 })
-  .toBuffer();
+  const dx = (1200 - targetWidth) / 2;
+  const dy = padding;
 
-  // Generate persistent filenames
+  const portraitImageForOg = await loadImage(portraitBuffer);
+  ogCtx.drawImage(portraitImageForOg, dx, dy, targetWidth, targetHeight);
+
+  const ogBuffer = ogCanvas.toBuffer('image/jpeg', 90);
+
+  // Persistent file names
   const fileIdentifier = token || recipientId || require('crypto').randomBytes(16).toString('hex');
   const mainFileName = `invite-${fileIdentifier}.png`;
   const ogFileName = `invite-${token || fileIdentifier}.jpg`;
@@ -236,7 +256,6 @@ const generateInvitationAssets = async ({
   const candidates = getUploadCandidates();
   let savedRelativePath = `/uploads/generated/${mainFileName}`;
 
-  // Write files to candidate upload directories to ensure durability across restarts
   for (const baseDir of candidates) {
     try {
       const genDir = path.join(baseDir, 'generated');
@@ -267,6 +286,7 @@ const generateInvitationAssets = async ({
     portraitSize: portraitBuffer.length,
     templateUsedId: template.id,
     templateName: template.name,
+    fontFamilyUsed: 'Clicker Script',
     isFallback
   };
 };
